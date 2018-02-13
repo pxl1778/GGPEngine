@@ -1,0 +1,13 @@
+﻿  compilation object save succeeded; see C:\Users\Peter\Documents\School\2018\GGP\DX11Starter\Debug\PixelShader.cso
+  compilation object save succeeded; see C:\Users\Peter\Documents\School\2018\GGP\DX11Starter\Debug\VertexShader.cso
+  SimpleShader.cpp
+  Mesh.cpp
+  Material.cpp
+  Main.cpp
+  GameEntity.cpp
+  Game.cpp
+  DXCore.cpp
+  Camera.cpp
+  Generating Code...
+  DX11Starter.vcxproj -> C:\Users\Peter\Documents\School\2018\GGP\DX11Starter\Debug\DX11Starter.exe
+  DX11Starter.vcxproj -> C:\Users\Peter\Documents\School\2018\GGP\DX11Starter\Debug\DX11Starter.pdb (Partial PDB)
