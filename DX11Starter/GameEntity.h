@@ -27,7 +27,7 @@ public:
 
 	void CalculateWorldMatrix();
 	void Draw(ID3D11DeviceContext* pContext, Camera* pCam);
-	void PrepareMaterial(DirectX::XMFLOAT4X4 pView, DirectX::XMFLOAT4X4 pProjection);
+	void PrepareMaterial(DirectX::XMFLOAT4X4 pView, DirectX::XMFLOAT4X4 pProjection, DirectX::XMFLOAT3 pCamPosition);
 private:
 	Mesh* meshPointer;
 	Material* material;

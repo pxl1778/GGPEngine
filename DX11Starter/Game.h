@@ -53,6 +53,9 @@ private:
 	Mesh* m1;
 	Mesh* m2;
 	Mesh* m3;
+	Mesh* m4;
+	Mesh* m5;
+	Mesh* m6;
 
 	//Materials
 	Material* mat1;
@@ -66,5 +69,6 @@ private:
 	//Lights
 	DirectionalLight dLight1;
 	DirectionalLight dLight2;
+	PointLight pLight1;
 };
 

@@ -48,6 +48,9 @@ Game::~Game()
 	delete m1;
 	delete m2;
 	delete m3;
+	delete m4;
+	delete m5; 
+	delete m6;
 
 	delete mat1;
 
@@ -79,6 +82,7 @@ void Game::Init()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(.4f, .3f, .9f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
 	dLight2 = DirectionalLight({ XMFLOAT4(.01f, .01f, .01f, 1.0f), XMFLOAT4(.1f, .01f, .05f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 1.0f) });
+	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 5.0f, 0.0f), 0.2f });
 }
 
 // --------------------------------------------------------
@@ -139,9 +143,14 @@ void Game::CreateBasicGeometry()
 	unsigned indices[] = { 0, 1, 2 };
 
 	//m1 = new Mesh(vertices, 3, indices, 3, device);
-	m1 = new Mesh("../Assets/Models/helix.obj", device);
+	m1 = new Mesh("../Assets/Models/sphere.obj", device);
+	m2 = new Mesh("../Assets/Models/helix.obj", device);
+	m3 = new Mesh("../Assets/Models/cone.obj", device);
+	m4 = new Mesh("../Assets/Models/cube.obj", device);
+	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
+	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
-	Vertex vertices2[] =
+	/*Vertex vertices2[] =
 	{
 		{ XMFLOAT3(+0.0f, +1.5f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
 		{ XMFLOAT3(+2.0f, -1.27f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
@@ -160,14 +169,15 @@ void Game::CreateBasicGeometry()
 	};
 	unsigned indices3[] = { 0, 2, 1, 1, 2, 3 };
 
-	m3 = new Mesh(vertices3, 4, indices3, 6, device);
+	m3 = new Mesh(vertices3, 4, indices3, 6, device);*/
 
-	gameEntities.push_back(new GameEntity(m1, mat1));
-	gameEntities[0]->SetPosition(XMFLOAT3(0, 0, -2));
+	gameEntities.push_back(new GameEntity(m6, mat1));
+	gameEntities[0]->SetPosition(XMFLOAT3(1, 0, 0));
 	gameEntities[0]->SetScale(XMFLOAT3(.5f, .5f, .5f));
-	//gameEntities.push_back(new GameEntity(m2, mat1));
-	//gameEntities[1]->SetPosition(XMFLOAT3(0, 0, -1));
-	//gameEntities.push_back(new GameEntity(m3, mat1));
+	gameEntities.push_back(new GameEntity(m2, mat1));
+	gameEntities[1]->SetPosition(XMFLOAT3(-1, 0, 0));
+	gameEntities.push_back(new GameEntity(m3, mat1));
+	gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
 }
 
 
@@ -195,6 +205,8 @@ void Game::Update(float deltaTime, float totalTime)
 		(*it)->CalculateWorldMatrix();
 	}
 	cam->Update(deltaTime);
+	pLight1.Position = XMFLOAT3(sin(totalTime/2)*3, sin(totalTime) * 5, sin(totalTime*3)*3);
+	//SetCursorPos(width/2, height/2);
 }
 
 // --------------------------------------------------------
@@ -218,6 +230,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 		(*it)->Draw(context, cam);
 	}
 
@@ -268,8 +281,11 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y)
 // --------------------------------------------------------
 void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 {
-	cam->UpdateRotation((x - (float)prevMousePos.x), (y - (float)prevMousePos.y));
-
+	// Check left mouse button
+	if (buttonState & 0x0001)
+	{
+		cam->UpdateRotation((x - (float)prevMousePos.x), (y - (float)prevMousePos.y));
+	}
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
 	prevMousePos.y = y;

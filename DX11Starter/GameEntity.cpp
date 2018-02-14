@@ -87,7 +87,7 @@ void GameEntity::CalculateWorldMatrix() {
 
 //Draws mesh and prepares material
 void GameEntity::Draw(ID3D11DeviceContext* pContext, Camera* pCam) {
-	PrepareMaterial(pCam->GetViewMatrix(), pCam->GetProjectionMatrix());
+	PrepareMaterial(pCam->GetViewMatrix(), pCam->GetProjectionMatrix(), pCam->GetPosition());
 
 	// Set buffers in the input assembler
 	UINT stride = sizeof(Vertex);
@@ -105,7 +105,7 @@ void GameEntity::Draw(ID3D11DeviceContext* pContext, Camera* pCam) {
 		0);    // Offset to add to each index when looking up vertices
 }
 
-void GameEntity::PrepareMaterial(XMFLOAT4X4 pView, XMFLOAT4X4 pProjection) {
+void GameEntity::PrepareMaterial(XMFLOAT4X4 pView, XMFLOAT4X4 pProjection, XMFLOAT3 pCamPosition) {
 
 	// Send data to shader variables
 	//  - Do this ONCE PER OBJECT you're drawing
@@ -115,11 +115,13 @@ void GameEntity::PrepareMaterial(XMFLOAT4X4 pView, XMFLOAT4X4 pProjection) {
 	material->GetVertexShader()->SetMatrix4x4("world", worldMatrix);
 	material->GetVertexShader()->SetMatrix4x4("view", pView);
 	material->GetVertexShader()->SetMatrix4x4("projection", pProjection);
+	material->GetVertexShader()->CopyAllBufferData();
+
+	material->GetPixelShader()->SetFloat3("CameraPosition", pCamPosition);
 
 	// Once you've set all of the data you care to change for
 	// the next draw call, you need to actually send it to the GPU
 	//  - If you skip this, the "SetMatrix" calls above won't make it to the GPU!
-	material->GetVertexShader()->CopyAllBufferData();
 	material->GetPixelShader()->CopyAllBufferData();
 
 

@@ -69,17 +69,17 @@ void Camera::UpdateProjectionMatrix(unsigned pWidth, unsigned pHeight) {
 
 //Updates the rotationX and rotationY when the mouse moves
 void Camera::UpdateRotation(float pX, float pY) {
-	if (pY > .02f) {
-		pY = .02f;
+	if (pY > .015f) {
+		pY = .015f;
 	}
-	if (pY < -.02f) {
-		pY = -.02f;
+	if (pY < -.015f) {
+		pY = -.015f;
 	}
-	if (pX > .02f) {
-		pX = .02f;
+	if (pX > .015f) {
+		pX = .015f;
 	}
-	if (pX < -.02f) {
-		pX = -.02f;
+	if (pX < -.015f) {
+		pX = -.015f;
 	}
 	rotationX += pX;
 	rotationY += pY;
