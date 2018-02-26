@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "Lights.h"
 #include <DirectXMath.h>
+#include "WICTextureLoader.h"
 #include <vector>
 
 class Game 
@@ -59,6 +60,11 @@ private:
 
 	//Materials
 	Material* mat1;
+
+	//Texture Stuff
+	ID3D11ShaderResourceView* wallTexture;
+	ID3D11ShaderResourceView* wallNormal;
+	ID3D11SamplerState* sampler;
 
 	//Entities
 	std::vector<GameEntity*> gameEntities;

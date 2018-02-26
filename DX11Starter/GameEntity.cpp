@@ -87,7 +87,6 @@ void GameEntity::CalculateWorldMatrix() {
 
 //Draws mesh and prepares material
 void GameEntity::Draw(ID3D11DeviceContext* pContext, Camera* pCam) {
-	PrepareMaterial(pCam->GetViewMatrix(), pCam->GetProjectionMatrix(), pCam->GetPosition());
 
 	// Set buffers in the input assembler
 	UINT stride = sizeof(Vertex);
@@ -95,6 +94,8 @@ void GameEntity::Draw(ID3D11DeviceContext* pContext, Camera* pCam) {
 	ID3D11Buffer* vb = meshPointer->GetVertexBuffer();
 	pContext->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 	pContext->IASetIndexBuffer(meshPointer->GetIndexBuffer(), DXGI_FORMAT_R32_UINT, 0);
+
+	PrepareMaterial(pCam->GetViewMatrix(), pCam->GetProjectionMatrix(), pCam->GetPosition());
 
 	// Finally do the actual drawing
 	//  - DrawIndexed() uses the currently set INDEX BUFFER to look up corresponding
@@ -118,10 +119,9 @@ void GameEntity::PrepareMaterial(XMFLOAT4X4 pView, XMFLOAT4X4 pProjection, XMFLO
 	material->GetVertexShader()->CopyAllBufferData();
 
 	material->GetPixelShader()->SetFloat3("CameraPosition", pCamPosition);
-
-	// Once you've set all of the data you care to change for
-	// the next draw call, you need to actually send it to the GPU
-	//  - If you skip this, the "SetMatrix" calls above won't make it to the GPU!
+	material->GetPixelShader()->SetSamplerState("Sampler", material->GetSampler());
+	material->GetPixelShader()->SetShaderResourceView("DiffuseTexture", material->GetTexture());
+	material->GetPixelShader()->SetShaderResourceView("NormalTexture", material->GetNormal());
 	material->GetPixelShader()->CopyAllBufferData();
 
 

@@ -12,8 +12,10 @@ struct VertexToPixel
 	//  |    |                |
 	//  v    v                v
 	float4 position		: SV_POSITION;
-	float3 worldPos		: TEXCOORD0;
+	float2 uv			: TEXCOORD0;
+	float3 worldPos		: TEXCOORD1;
 	float3 normal		: NORMAL;
+	float3 tangent		: TANGENT;
 };
 
 struct DirectionalLight
@@ -37,6 +39,10 @@ cbuffer externalData : register(b0) {
 	float3 CameraPosition;
 };
 
+Texture2D DiffuseTexture : register(t0);
+Texture2D NormalTexture : register(t1);
+SamplerState Sampler : register(s0);
+
 // --------------------------------------------------------
 // The entry point (main method) for our pixel shader
 // 
@@ -48,9 +54,18 @@ cbuffer externalData : register(b0) {
 // --------------------------------------------------------
 float4 main(VertexToPixel input) : SV_TARGET
 {
-	input.normal = normalize(input.normal);
 	float3 dirToCamera = normalize(CameraPosition - input.worldPos);
 
+	//normal calculation
+	input.normal = normalize(input.normal);
+	input.tangent = normalize(normalize(input.tangent) - dot(input.tangent, input.normal)*input.normal);
+	float3 biTangent = cross(input.tangent, input.normal);
+	float3x3 TBN = float3x3(input.tangent, biTangent, input.normal);
+	float3 unpackedNormal = NormalTexture.Sample(Sampler, input.uv).rgb * 2.0f - 1.0f;;
+	float3 finalNormal = mul(unpackedNormal, TBN);
+	input.normal = normalize(finalNormal);
+
+	//lights
 	float dNdotL1 = saturate(dot(input.normal, -dLight1.Direction));
 	float dNdotL2 = saturate(dot(input.normal, -dLight2.Direction));
 
@@ -59,8 +74,9 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float pAttenuationL1 = 1.0f / (1.0f + pLight1.Attenuation * pow(length(pLight1.Position - input.worldPos), 2.0f));
 	float3 pReflectionL1 = reflect(-dirToPLight1, input.normal);
 	float specularityL1 = pow(saturate(dot(pReflectionL1, dirToCamera)), 64) * pAttenuationL1;
+	float4 finalColor = dLight1.AmbientColor + ((dLight1.DiffuseColor * dNdotL1)) + ((dLight2.DiffuseColor * dNdotL2)) + ((pLight1.DiffuseColor * pNdotL1) * pAttenuationL1) + (specularityL1);
 
-	float4 finalColor = /*Surface color * */ dLight1.AmbientColor + ((dLight1.DiffuseColor * dNdotL1)) + ((dLight2.DiffuseColor * dNdotL2)) + ((pLight1.DiffuseColor * pNdotL1) * pAttenuationL1) + (specularityL1);
-
-	return finalColor;
+	//diffuse
+	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
+	return surfaceColor * finalColor;
 }

@@ -61,6 +61,8 @@ Game::~Game()
 	gameEntities.clear();
 
 	delete cam;
+	sampler->Release();
+	wallTexture->Release();
 }
 
 // --------------------------------------------------------
@@ -81,8 +83,8 @@ void Game::Init()
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(.4f, .3f, .9f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
-	dLight2 = DirectionalLight({ XMFLOAT4(.01f, .01f, .01f, 1.0f), XMFLOAT4(.1f, .01f, .05f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 1.0f) });
-	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 5.0f, 0.0f), 0.2f });
+	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
+	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 }
 
 // --------------------------------------------------------
@@ -93,10 +95,21 @@ void Game::Init()
 // --------------------------------------------------------
 void Game::LoadShaders()
 {
+	//Loading Textures
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
+	D3D11_SAMPLER_DESC sd = {};
+	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sd.MaxLOD = D3D11_FLOAT32_MAX;
+	device->CreateSamplerState(&sd, &sampler);
 	//Material 1
-	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context));
+	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+	//mat1->GetPixelShader()->SetShaderResourceView("");
 }
 
 
@@ -119,30 +132,11 @@ void Game::CreateMatrices()
 	cam->UpdateProjectionMatrix(width, height);
 }
 
-
 // --------------------------------------------------------
 // Creates the geometry we're going to draw - a single triangle for now
 // --------------------------------------------------------
 void Game::CreateBasicGeometry()
 {
-	// Set up the vertices of the triangle we would like to draw
-	// - We're going to copy this array, exactly as it exists in memory
-	//    over to a DirectX-controlled data structure (the vertex buffer)
-	Vertex vertices[] =
-	{
-		{ XMFLOAT3(+0.0f, +1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+1.5f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-1.5f, -1.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-	};
-
-	// Set up the indices, which tell us which vertices to use and in which order
-	// - This is somewhat redundant for just 3 vertices (it's a simple example)
-	// - Indices are technically not required if the vertices are in the buffer 
-	//    in the correct order and each one will be used exactly once
-	// - But just to see how it's done...
-	unsigned indices[] = { 0, 1, 2 };
-
-	//m1 = new Mesh(vertices, 3, indices, 3, device);
 	m1 = new Mesh("../Assets/Models/sphere.obj", device);
 	m2 = new Mesh("../Assets/Models/helix.obj", device);
 	m3 = new Mesh("../Assets/Models/cone.obj", device);
@@ -150,34 +144,12 @@ void Game::CreateBasicGeometry()
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
-	/*Vertex vertices2[] =
-	{
-		{ XMFLOAT3(+0.0f, +1.5f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+2.0f, -1.27f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-2.0f, -1.27f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-	};
-	unsigned indices2[] = { 0, 1, 2 };
-
-	m2 = new Mesh(vertices2, 3, indices2, 3, device);
-
-	Vertex vertices3[] =
-	{
-		{ XMFLOAT3(-2.5f, -2.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+2.5f, -2.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(-2.5f, +2.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-		{ XMFLOAT3(+2.5f, +2.0f, +0.0f), XMFLOAT3(0, 0, -1), XMFLOAT2(0, 0) },
-	};
-	unsigned indices3[] = { 0, 2, 1, 1, 2, 3 };
-
-	m3 = new Mesh(vertices3, 4, indices3, 6, device);*/
-
-	gameEntities.push_back(new GameEntity(m6, mat1));
-	gameEntities[0]->SetPosition(XMFLOAT3(1, 0, 0));
-	gameEntities[0]->SetScale(XMFLOAT3(.5f, .5f, .5f));
+	gameEntities.push_back(new GameEntity(m1, mat1));
+	gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
 	gameEntities.push_back(new GameEntity(m2, mat1));
-	gameEntities[1]->SetPosition(XMFLOAT3(-1, 0, 0));
-	gameEntities.push_back(new GameEntity(m3, mat1));
-	gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
+	gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
+	//gameEntities.push_back(new GameEntity(m3, mat1));
+	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
 }
 
 
@@ -205,8 +177,7 @@ void Game::Update(float deltaTime, float totalTime)
 		(*it)->CalculateWorldMatrix();
 	}
 	cam->Update(deltaTime);
-	pLight1.Position = XMFLOAT3(sin(totalTime/2)*3, sin(totalTime) * 5, sin(totalTime*3)*3);
-	//SetCursorPos(width/2, height/2);
+	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
 }
 
 // --------------------------------------------------------
@@ -215,7 +186,7 @@ void Game::Update(float deltaTime, float totalTime)
 void Game::Draw(float deltaTime, float totalTime)
 {
 	// Background color (Cornflower Blue in this case) for clearing
-	const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+	const float color[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	// Clear the render target and depth buffer (erases what's on the screen)
 	//  - Do this ONCE PER FRAME
@@ -284,7 +255,7 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 	// Check left mouse button
 	if (buttonState & 0x0001)
 	{
-		cam->UpdateRotation((x - (float)prevMousePos.x), (y - (float)prevMousePos.y));
+		cam->UpdateRotation((x - (float)prevMousePos.x) * 0.005f, (y - (float)prevMousePos.y) * 0.005f);
 	}
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
