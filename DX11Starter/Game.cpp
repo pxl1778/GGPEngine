@@ -52,6 +52,10 @@ Game::~Game()
 	delete m5; 
 	delete m6;
 
+	delete abominationBody;
+	delete abominationEyeball;
+	delete abomincationTentacle;
+
 	delete mat1;
 
 	while (!gameEntities.empty()) {
@@ -144,12 +148,48 @@ void Game::CreateBasicGeometry()
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
-	gameEntities.push_back(new GameEntity(m1, mat1));
-	gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
-	gameEntities.push_back(new GameEntity(m2, mat1));
-	gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
+	abominationBody = new Mesh("../Assets/Models/abomination1/body.obj", device);
+	abominationEyeball = new Mesh("../Assets/Models/abomination1/eyeball.obj", device);
+	abomincationTentacle = new Mesh("../Assets/Models/abomination1/tentacle.obj", device);
+
+	//gameEntities.push_back(new GameEntity(m1, mat1));
+	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
+	//gameEntities.push_back(new GameEntity(m2, mat1));
+	//gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
 	//gameEntities.push_back(new GameEntity(m3, mat1));
 	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
+
+	//1 body
+	gameEntities.push_back(new GameEntity(abominationBody, mat1));
+	//3 eyes
+	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
+	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
+	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
+	gameEntities[2]->Translate(XMFLOAT3(-1.1, .4, -.8));
+	gameEntities[2]->Scale(XMFLOAT3(.7, .7, .7));
+	gameEntities[3]->Translate(XMFLOAT3(1.1, .4, -.8));
+	gameEntities[3]->Scale(XMFLOAT3(.7, .7, .7));
+	//8 tentacles
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[5]->Rotate(XMFLOAT3(0, XM_PI, 0));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[6]->Rotate(XMFLOAT3(0, XM_PI/4, 0));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[7]->Rotate(XMFLOAT3(0, 3*XM_PI/4, 0));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[8]->Rotate(XMFLOAT3(0, XM_PI/2, 0));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[9]->Rotate(XMFLOAT3(0, 5*XM_PI/4, 0));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[10]->Rotate(XMFLOAT3(0, 3*XM_PI/2, 0));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
+	gameEntities[11]->Rotate(XMFLOAT3(0, 7*XM_PI/4, 0));
+
+	//models are big, scale em down
+	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+		(*it)->Scale(XMFLOAT3(.5, .5, .5));
+	}
 }
 
 
@@ -173,6 +213,23 @@ void Game::Update(float deltaTime, float totalTime)
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
+
+	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
+	float multiplier = .001;
+	float offset = .1;
+
+	//body hover
+	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
+	//eyball hover
+	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2*offset)) * multiplier, 0)); //first eyeball is ahead of the other two
+	for (int i = 2; i <= 3; i++) {
+		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
+	}
+	//tentacle hover
+	for (int i = 4; i <= 11; i++) {
+		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
+	}
+
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it){
 		(*it)->CalculateWorldMatrix();
 	}

@@ -58,6 +58,11 @@ private:
 	Mesh* m5;
 	Mesh* m6;
 
+	//Abomination meshes
+	Mesh* abominationEyeball;
+	Mesh* abominationBody;
+	Mesh* abomincationTentacle;
+
 	//Materials
 	Material* mat1;
 
