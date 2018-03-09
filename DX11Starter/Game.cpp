@@ -221,7 +221,7 @@ void Game::Update(float deltaTime, float totalTime)
 	//body hover
 	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
 	//eyball hover
-	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2*offset)) * multiplier, 0)); //first eyeball is ahead of the other two
+	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
 	for (int i = 2; i <= 3; i++) {
 		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
 	}
@@ -230,7 +230,7 @@ void Game::Update(float deltaTime, float totalTime)
 		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
 	}
 
-	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it){
+	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
 	cam->Update(deltaTime);

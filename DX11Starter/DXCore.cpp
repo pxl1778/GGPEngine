@@ -57,6 +57,9 @@ DXCore::DXCore(
 	backBufferRTV = 0;
 	depthStencilView = 0;
 
+	// Initialize game state to start menu
+	gs = START_MENU;
+
 	// Query performance counter for accurate timing information
 	__int64 perfFreq;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&perfFreq);
@@ -372,9 +375,58 @@ HRESULT DXCore::Run()
 			if(titleBarStats)
 				UpdateTitleBarStats();
 
-			// The game loop
-			Update(deltaTime, totalTime);
-			Draw(deltaTime, totalTime);
+			// Switch game states manually with num presses (TEMP CODE)
+			if (GetAsyncKeyState('1')) gs = START_MENU;
+			if (GetAsyncKeyState('2')) gs = IN_GAME;
+			if (GetAsyncKeyState('3')) gs = PAUSE_MENU;
+			if (GetAsyncKeyState('4')) gs = GAME_OVER;
+
+			// Checks game state and executes proper game state code
+			switch (gs) {
+				case START_MENU: {
+					// Start menu logic here
+					const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
+
+					context->ClearRenderTargetView(backBufferRTV, color);
+					context->ClearDepthStencilView(
+						depthStencilView,
+						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+						1.0f,
+						0);
+					swapChain->Present(0, 0);
+					break;
+				}
+				case IN_GAME: {
+					// The game loop
+					Update(deltaTime, totalTime);
+					Draw(deltaTime, totalTime);
+					break;
+				}
+				case PAUSE_MENU: {
+					// Pause menu logic here
+					const float color[4] = { 0.8f, 0.8f, 0.8f, 0.0f };
+					context->ClearRenderTargetView(backBufferRTV, color);
+					context->ClearDepthStencilView(
+						depthStencilView,
+						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+						1.0f,
+						0);
+					swapChain->Present(0, 0);
+					break;
+				}
+				case GAME_OVER: {
+					// Game over logic here
+					const float color[4] = { 1.0f, 0.0f, 0.0f, 0.0f };
+					context->ClearRenderTargetView(backBufferRTV, color);
+					context->ClearDepthStencilView(
+						depthStencilView,
+						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+						1.0f,
+						0);
+					swapChain->Present(0, 0);
+					break;
+				}
+			}
 		}
 	}
 

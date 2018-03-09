@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <d3d11.h>
 #include <string>
+#include "GameStates.h"
 
 // We can include the correct library files here
 // instead of in Visual Studio settings if we want
@@ -84,6 +85,9 @@ private:
 	// FPS calculation
 	int fpsFrameCount;
 	float fpsTimeElapsed;
+
+	// Game state enum
+	GAME_STATES gs;
 	
 	void UpdateTimer();			// Updates the timer for this frame
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
