@@ -165,10 +165,10 @@ void Game::CreateBasicGeometry()
 	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
 	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
 	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities[2]->Translate(XMFLOAT3(-1.1, .4, -.8));
-	gameEntities[2]->Scale(XMFLOAT3(.7, .7, .7));
-	gameEntities[3]->Translate(XMFLOAT3(1.1, .4, -.8));
-	gameEntities[3]->Scale(XMFLOAT3(.7, .7, .7));
+	gameEntities[2]->Translate(XMFLOAT3(-1.1f, .4f, -.8f));
+	gameEntities[2]->Scale(XMFLOAT3(.7f, .7f, .7f));
+	gameEntities[3]->Translate(XMFLOAT3(1.1f, .4f, -.8f));
+	gameEntities[3]->Scale(XMFLOAT3(.7f, .7f, .7f));
 	//8 tentacles
 	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
 	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
@@ -215,8 +215,8 @@ void Game::Update(float deltaTime, float totalTime)
 		Quit();
 
 	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
-	float multiplier = .001;
-	float offset = .1;
+	float multiplier = .001f;
+	float offset = .1f;
 
 	//body hover
 	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
@@ -233,7 +233,8 @@ void Game::Update(float deltaTime, float totalTime)
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
-	cam->Update(deltaTime);
+	//cam->Update(deltaTime);
+	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
 }
 

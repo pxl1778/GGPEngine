@@ -32,6 +32,7 @@ Camera::~Camera()
 	
 }
 
+//Freely move camera direction with mouse
 void Camera::Update(float deltaTime) {
 	XMVECTOR rotationVector = XMQuaternionRotationRollPitchYaw(rotationY, rotationX, 0);
 	XMFLOAT4 v = XMFLOAT4();
@@ -52,6 +53,38 @@ void Camera::Update(float deltaTime) {
 		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * 3 *deltaTime));
 	}
 	XMMATRIX newView = XMMatrixLookToLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
+	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(newView));
+}
+
+//Used when looking at something and not being able to shift camera away from target
+void Camera::UpdateLookAt(float deltaTime, XMFLOAT3 pTargetLookAt) {
+	XMFLOAT4 v = XMFLOAT4();
+	XMVECTOR newForward = XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position);
+	newForward = XMVector3Normalize(newForward);
+	XMVECTOR rightVector = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(newForward));
+	XMVECTOR upVector = XMVector3Cross(newForward, rightVector);
+	XMStoreFloat4(&v, upVector);
+	if (GetAsyncKeyState('W') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * 3 * deltaTime));
+	}
+	if (GetAsyncKeyState('S') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * 3 * deltaTime));
+	}
+	if (GetAsyncKeyState('D') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(rightVector) * 3 * deltaTime));
+	}
+	if (GetAsyncKeyState('A') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * 3 * deltaTime));
+	}
+	if (GetAsyncKeyState('Q') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * 3 * deltaTime));
+	}
+
+	if (GetAsyncKeyState('E') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * 3 * deltaTime));
+	}
+	//XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
+	XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&pTargetLookAt), XMVector3Normalize(upVector));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(newView));
 }
 
