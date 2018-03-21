@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "Vertex.h"
-
+#include "WICTextureLoader.h"
+#include "DDSTextureLoader.h"
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -55,6 +56,8 @@ Game::~Game()
 	delete abominationBody;
 	delete abominationEyeball;
 	delete abomincationTentacle;
+	delete SkyBoxPixelShader;
+	delete SkyBoxVertexShader;
 
 	delete mat1;
 
@@ -64,9 +67,13 @@ Game::~Game()
 	}
 	gameEntities.clear();
 
-	delete cam;
 	sampler->Release();
 	wallTexture->Release();
+	skyBoxRastState->Release();
+	skyBoxDepthState->Release();
+
+	delete cam;
+
 }
 
 // --------------------------------------------------------
@@ -82,6 +89,24 @@ void Game::Init()
 	CreateMatrices();
 	CreateBasicGeometry();
 
+	// Load the sky box from a DDS file
+	CreateDDSTextureFromFile(device, L"Textures/BackGroundPlaceholder.dds", 0, &skyBoxSRV);
+
+	// Create a sampler state that holds options for sampling
+	// The descriptions should always just be local variables	
+
+	D3D11_RASTERIZER_DESC rasterDesc = {};
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
+	rasterDesc.CullMode = D3D11_CULL_FRONT;
+	device->CreateRasterizerState(&rasterDesc, &skyBoxRastState);
+
+	D3D11_DEPTH_STENCIL_DESC depthScript = {};
+	depthScript.DepthEnable = true;
+	depthScript.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthScript.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	device->CreateDepthStencilState(&depthScript, &skyBoxDepthState);
+
+
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
@@ -89,6 +114,8 @@ void Game::Init()
 	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(.4f, .3f, .9f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
 	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
+
+
 }
 
 // --------------------------------------------------------
@@ -113,6 +140,11 @@ void Game::LoadShaders()
 	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+	SkyBoxVertexShader = new SimpleVertexShader(device, context);
+	SkyBoxPixelShader = new SimplePixelShader(device, context);
+	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader");
+	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader");
+
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 }
 
@@ -147,6 +179,7 @@ void Game::CreateBasicGeometry()
 	m4 = new Mesh("../Assets/Models/cube.obj", device);
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
+
 
 	abominationBody = new Mesh("../Assets/Models/abomination1/body.obj", device);
 	abominationEyeball = new Mesh("../Assets/Models/abomination1/eyeball.obj", device);
@@ -262,6 +295,38 @@ void Game::Draw(float deltaTime, float totalTime)
 		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 		(*it)->Draw(context, cam);
 	}
+
+
+
+
+	// Render the sky (after all opaque geometry)
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+
+	ID3D11Buffer* skyVB = m2->GetVertexBuffer();
+	ID3D11Buffer* skyIB = m2->GetIndexBuffer();
+	
+	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
+	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
+
+	SkyBoxVertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
+	SkyBoxVertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
+	SkyBoxVertexShader->CopyAllBufferData();
+	SkyBoxVertexShader->SetShader();
+
+	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
+	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
+	SkyBoxPixelShader->SetShader();
+	
+	context->RSSetState(skyBoxRastState);
+	context->OMSetDepthStencilState(skyBoxDepthState, 0);
+	//context->DrawIndexed(m2->GetIndexCount(), 0, 0);
+	
+	// At the end of the frame, reset render states
+	context->RSSetState(0);
+	context->OMSetDepthStencilState(0, 0);
+	
+
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it

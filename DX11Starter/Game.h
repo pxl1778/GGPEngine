@@ -39,7 +39,10 @@ private:
 
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;
+	SimpleVertexShader* SkyBoxVertexShader;
 	SimplePixelShader* pixelShader;
+	SimplePixelShader* SkyBoxPixelShader;
+	
 
 	// The matrices to go from model space to screen space
 	DirectX::XMFLOAT4X4 worldMatrix;
@@ -57,6 +60,7 @@ private:
 	Mesh* m4;
 	Mesh* m5;
 	Mesh* m6;
+	Mesh* Box;
 
 	//Abomination meshes
 	Mesh* abominationEyeball;
@@ -65,12 +69,16 @@ private:
 
 	//Materials
 	Material* mat1;
+	Material* SkyBoxMat;
 
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
 	ID3D11ShaderResourceView* wallNormal;
+	ID3D11ShaderResourceView* skyBoxSRV;
 	ID3D11SamplerState* sampler;
 
+	ID3D11RasterizerState* skyBoxRastState;
+	ID3D11DepthStencilState* skyBoxDepthState;
 	//Entities
 	std::vector<GameEntity*> gameEntities;
 
