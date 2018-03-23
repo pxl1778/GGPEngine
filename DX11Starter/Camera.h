@@ -11,6 +11,7 @@ public:
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
 
 	void Update(float deltaTime);
+	void UpdateLookAt(float deltaTime, DirectX::XMFLOAT3 pTargetPos);
 	void UpdateProjectionMatrix(unsigned pWidth, unsigned pHeight);
 	void UpdateRotation(float pX, float pY);
 
