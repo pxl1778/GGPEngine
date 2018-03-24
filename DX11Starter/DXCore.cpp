@@ -78,6 +78,9 @@ DXCore::~DXCore()
 	if (swapChain) { swapChain->Release();}
 	if (context) { context->Release();}
 	if (device) { device->Release();}
+
+	m_font.reset();
+	m_spriteBatch.reset();
 }
 
 // --------------------------------------------------------
@@ -267,6 +270,15 @@ HRESULT DXCore::InitDirectX()
 	viewport.MaxDepth	= 1.0f;
 	context->RSSetViewports(1, &viewport);
 
+	m_font = std::make_unique<DirectX::SpriteFont>(device, L"../SpriteFont/myfile.spritefont");
+	m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(context);
+	
+	m_fontPos.x = 1280 / 2.f;
+	m_fontPos.y = 720 / 2.f;
+	
+	m_fontPos2.x = 1280 / 2.f;
+	m_fontPos2.y = 720 / 2.f + 100;
+
 	// Return the "everything is ok" HRESULT value
 	return S_OK;
 }
@@ -380,19 +392,47 @@ HRESULT DXCore::Run()
 			if (GetAsyncKeyState('2')) gs = IN_GAME;
 			if (GetAsyncKeyState('3')) gs = PAUSE_MENU;
 			if (GetAsyncKeyState('4')) gs = GAME_OVER;
-
+			
 			// Checks game state and executes proper game state code
 			switch (gs) {
 				case START_MENU: {
 					// Start menu logic here
 					const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
-
 					context->ClearRenderTargetView(backBufferRTV, color);
 					context->ClearDepthStencilView(
 						depthStencilView,
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					m_spriteBatch->Begin();
+					const wchar_t* output = L"Start";
+					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
+					origin.x = origin.x / 2;
+					origin.y = origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(), 
+						output,
+						m_fontPos, 
+						DirectX::Colors::White, 
+						0.f, 
+						origin);
+
+					const wchar_t* output2 = L"Exit";
+					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
+					origin2.x = origin2.x / 2;
+					origin2.y = origin2.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output2,
+						m_fontPos2,
+						DirectX::Colors::White,
+						0.f,
+						origin2);
+					m_spriteBatch->End();
+
 					swapChain->Present(0, 0);
 					break;
 				}
@@ -411,6 +451,35 @@ HRESULT DXCore::Run()
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					m_spriteBatch->Begin();
+					const wchar_t* output = L"Paused";
+					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
+					origin.x = origin.x / 2;
+					origin.y = origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output,
+						m_fontPos,
+						DirectX::Colors::White,
+						0.f,
+						origin);
+
+					const wchar_t* output2 = L"Resume";
+					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
+					origin2.x = origin2.x / 2;
+					origin2.y = origin2.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output2,
+						m_fontPos2,
+						DirectX::Colors::White,
+						0.f,
+						origin2);
+					m_spriteBatch->End();
+
 					swapChain->Present(0, 0);
 					break;
 				}
@@ -423,6 +492,35 @@ HRESULT DXCore::Run()
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					m_spriteBatch->Begin();
+					const wchar_t* output = L"GAME OVER";
+					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
+					origin.x = origin.x / 2;
+					origin.y = origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output,
+						m_fontPos,
+						DirectX::Colors::White,
+						0.f,
+						origin);
+
+					const wchar_t* output2 = L"Return to Start";
+					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
+					origin2.x = origin2.x / 2;
+					origin2.y = origin2.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output2,
+						m_fontPos2,
+						DirectX::Colors::White,
+						0.f,
+						origin2);
+					m_spriteBatch->End();
+
 					swapChain->Present(0, 0);
 					break;
 				}
