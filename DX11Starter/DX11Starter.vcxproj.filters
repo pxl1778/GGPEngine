@@ -81,5 +81,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="..\x64\SpriteFont\myfile.spritefont" />
   </ItemGroup>
 </Project>
