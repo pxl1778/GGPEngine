@@ -34,10 +34,13 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat));
 	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat));
 	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat));
+	gameEntities[1]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
 	gameEntities[2]->Translate(XMFLOAT3(-1.1f, .4f, -.8f));
 	gameEntities[2]->Scale(XMFLOAT3(.7f, .7f, .7f));
+	gameEntities[2]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
 	gameEntities[3]->Translate(XMFLOAT3(1.1f, .4f, -.8f));
 	gameEntities[3]->Scale(XMFLOAT3(.7f, .7f, .7f));
+	gameEntities[3]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
 	//8 tentacles
 	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
 	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));

@@ -16,7 +16,8 @@ public:
 	~Creature();
 	void Update(float deltaTime, float totalTime);
 	void Draw(ID3D11DeviceContext* context, Camera* cam, DirectionalLight* dLight1, DirectionalLight* dLight2, PointLight* pLight1);
-	
+	//Entities
+	std::vector<GameEntity*> gameEntities;
 
 private:
 
@@ -36,7 +37,6 @@ private:
 	Material* bodyMat;
 	Material* eyeMat;
 
-	//Entities
-	std::vector<GameEntity*> gameEntities;
+	
 };
 

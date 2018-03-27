@@ -1,5 +1,2 @@
-﻿  Game.cpp
-  Creature.cpp
-  Generating Code...
-  LINK : C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe not found or not built by the last incremental link; performing full link
+﻿  Creature.cpp
   DX11Starter.vcxproj -> C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe

@@ -249,14 +249,14 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
-	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+	for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 		(*it)->Draw(context, cam);
 	}
 
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
+	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
 
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);
