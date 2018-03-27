@@ -89,8 +89,7 @@ void Game::Init()
 	CreateMatrices();
 	CreateBasicGeometry();
 
-	// Load the sky box from a DDS file
-	CreateDDSTextureFromFile(device, L"Textures/BackGroundPlaceholder.dds", 0, &skyBoxSRV);
+	
 
 	// Create a sampler state that holds options for sampling
 	// The descriptions should always just be local variables	
@@ -129,6 +128,8 @@ void Game::LoadShaders()
 	//Loading Textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
+	// Load the sky box from a DDS file
+	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
 	D3D11_SAMPLER_DESC sd = {};
 	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -136,14 +137,16 @@ void Game::LoadShaders()
 	sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sd.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&sd, &sampler);
+
+
 	//Material 1
 	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
-	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader");
-	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader");
+	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
+	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 }
@@ -303,8 +306,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
-	ID3D11Buffer* skyVB = m2->GetVertexBuffer();
-	ID3D11Buffer* skyIB = m2->GetIndexBuffer();
+	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
+	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
 	
 	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
 	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
@@ -316,11 +319,13 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
 	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
+	//SkyBoxPixelShader->CopyAllBufferData();
 	SkyBoxPixelShader->SetShader();
 	
 	context->RSSetState(skyBoxRastState);
 	context->OMSetDepthStencilState(skyBoxDepthState, 0);
-	//context->DrawIndexed(m2->GetIndexCount(), 0, 0);
+	int test = m4->GetIndexCount();
+	context->DrawIndexed(test, 0, 0);
 	
 	// At the end of the frame, reset render states
 	context->RSSetState(0);
