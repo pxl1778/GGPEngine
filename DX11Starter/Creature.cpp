@@ -13,8 +13,14 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 
 	//create materials
 	bodyMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), bodyTxt, blankNormal, sampler);
+	bodyMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
+	bodyMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	eyeMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt, blankNormal, sampler);
+	eyeMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
+	eyeMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	tentacleMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), tentacleTxt, blankNormal, sampler);
+	tentacleMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
+	tentacleMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 
 	//create meshes
 	abominationBody = new Mesh("../Assets/Models/abomination1/body.obj", device);
@@ -105,7 +111,7 @@ void Creature::Update(float deltaTime, float totalTime)
 //for now draw method is hard coded to accept the right amount of lights in the scene; this will need to be changed if we change the lights
 void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight1, DirectionalLight* dLight2, PointLight* pLight1)
 {
-	/*
+	
 	//draw all entities
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
@@ -113,7 +119,7 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 		(*it)->Draw(context, cam);
 	}
-	*/
+	
 
 
 }

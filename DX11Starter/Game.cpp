@@ -256,7 +256,7 @@ void Game::Draw(float deltaTime, float totalTime)
 		(*it)->Draw(context, cam);
 	}
 
-	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
 
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);
