@@ -10,6 +10,7 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
 	position = XMFLOAT3(0, 0, 0);
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
+	box = BoundingBox({ {-1, -1, -1}, {1, 1, 1} });
 }
 
 
@@ -40,6 +41,10 @@ XMFLOAT3 GameEntity::GetRotation() {
 
 XMFLOAT3 GameEntity::GetScale() {
 	return scale;
+}
+
+void GameEntity::TestPick(XMVECTOR pOrigin, XMVECTOR pDirection) {
+	//https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
 }
 
 void GameEntity::SetWorldMatrix(XMFLOAT4X4 pWorldMatrix) {

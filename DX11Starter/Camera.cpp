@@ -128,7 +128,7 @@ void Camera::UpdateRotation(float pX, float pY) {
 	if (rotationX < 0) {
 		rotationX = 3.14;
 	}*/
-	printf("%.2f", rotationX); printf("  "); printf("%.2f", rotationY); printf("\n");
+	//printf("%.2f", rotationX); printf("  "); printf("%.2f", rotationY); printf("\n");
 }
 
 XMFLOAT4X4 Camera::GetViewMatrix() {

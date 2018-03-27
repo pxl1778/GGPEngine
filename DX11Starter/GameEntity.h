@@ -3,6 +3,7 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Camera.h"
+#include "BoundingBox.h"
 class GameEntity
 {
 public:
@@ -15,6 +16,7 @@ public:
 	DirectX::XMFLOAT3 GetPosition();
 	DirectX::XMFLOAT3 GetRotation();
 	DirectX::XMFLOAT3 GetScale();
+	
 
 	void SetWorldMatrix(DirectX::XMFLOAT4X4 pWorldMatrix);
 	void SetPosition(DirectX::XMFLOAT3 pPosition);
@@ -24,6 +26,8 @@ public:
 	void Translate(DirectX::XMFLOAT3 pTranslate);
 	void Rotate(DirectX::XMFLOAT3 pRotate);
 	void Scale(DirectX::XMFLOAT3 pScale);
+
+	void TestPick(DirectX::XMVECTOR pOrigin, DirectX::XMVECTOR pDirection);
 
 	void CalculateWorldMatrix();
 	void Draw(ID3D11DeviceContext* pContext, Camera* pCam);
@@ -35,5 +39,6 @@ private:
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 rotation;
 	DirectX::XMFLOAT3 scale;
+	BoundingBox box;
 };
 

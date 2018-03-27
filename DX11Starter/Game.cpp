@@ -285,6 +285,8 @@ void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 	prevMousePos.x = x;
 	prevMousePos.y = y;
 
+	TestInteraction(x, y);
+
 	// Caputure the mouse so we keep getting mouse move
 	// events even if the mouse leaves the window.  we'll be
 	// releasing the capture once a mouse button is released
@@ -328,5 +330,43 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 void Game::OnMouseWheel(float wheelDelta, int x, int y)
 {
 	// Add any custom code here...
+}
+
+void Game::TestInteraction(int pMouseX, int pMouseY) {
+	//http://www.rastertek.com/dx11tut47.html
+	float pointX, pointY;
+	XMMATRIX inverseViewMatrix, viewMatrix;
+	XMFLOAT4X4 inverseViewMatrixF, inverseEntityMatrix;
+	XMFLOAT3 direction;
+
+	pointX = ((2.0f * (float)pMouseX) / (float)width) - 1.0f;
+	pointY = (((2.0f * (float)pMouseY) / (float)height) - 1.0f) * -1.0f;
+
+	pointX = pointX / cam->GetProjectionMatrix()._11;
+	pointY = pointY / cam->GetProjectionMatrix()._22;
+
+	viewMatrix = XMLoadFloat4x4(&(cam->GetViewMatrix()));
+	inverseViewMatrix = XMMatrixInverse(nullptr, viewMatrix);//could go wrong
+	XMStoreFloat4x4(&inverseViewMatrixF, inverseViewMatrix);
+
+	direction.x = (pointX * inverseViewMatrixF._11) + (pointY * inverseViewMatrixF._21) + inverseViewMatrixF._31;
+	direction.y = (pointX * inverseViewMatrixF._12) + (pointY * inverseViewMatrixF._22) + inverseViewMatrixF._32;
+	direction.z = (pointX * inverseViewMatrixF._13) + (pointY * inverseViewMatrixF._23) + inverseViewMatrixF._33;
+
+	XMFLOAT3 origin = cam->GetPosition();
+
+	XMMATRIX entityWorldMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&(gameEntities[0]->GetWorldMatrix())));
+	XMStoreFloat4x4(&inverseEntityMatrix, entityWorldMatrix);
+
+	XMVECTOR rayOrigin = XMVector3TransformCoord(XMLoadFloat3(&origin), XMLoadFloat4x4(&inverseEntityMatrix));
+	XMVECTOR rayDirection = XMVector3TransformNormal(XMLoadFloat3(&direction), XMLoadFloat4x4(&inverseEntityMatrix));
+	rayDirection = XMVector3Normalize(rayDirection);
+	XMFLOAT3 rayDirectionF; //this is facing in the right direction! Hooray!
+	XMStoreFloat3(&rayDirectionF, rayDirection);
+	XMFLOAT3 rayOriginF; //position is half of what the actual camera position is...so *shrugs* worth a shot
+	XMStoreFloat3(&rayOriginF, rayOrigin);
+	//std::cout << rayOriginF.x << " "  << rayOriginF.y << " " << rayOriginF.z << "\n";
+	//std::cout << cam->GetPosition().x << " " << cam->GetPosition().y <<" " << cam->GetPosition().z << "\n";
+	//std::cout << rayDirectionF.x<< " " << rayDirectionF.y << " " << rayDirectionF.z << "\n";
 }
 #pragma endregion
