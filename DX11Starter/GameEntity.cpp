@@ -10,7 +10,7 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
 	position = XMFLOAT3(0, 0, 0);
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
-	box = BoundingBox({ {-1, -1, -1}, {1, 1, 1} });
+	box = BoundingBox({ {-1, 0, -1}, {1, 2, 1} });
 }
 
 
@@ -43,8 +43,32 @@ XMFLOAT3 GameEntity::GetScale() {
 	return scale;
 }
 
-void GameEntity::TestPick(XMVECTOR pOrigin, XMVECTOR pDirection) {
+void GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
 	//https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
+	float t1 = (box.min.x - pOrigin.x) / pDirection.x;
+	float t2 = (box.max.x - pOrigin.x) / pDirection.x;
+	float t3 = (box.min.y - pOrigin.y) / pDirection.y;
+	float t4 = (box.max.y - pOrigin.y) / pDirection.y;
+	float t5 = (box.min.z - pOrigin.z) / pDirection.z;
+	float t6 = (box.max.z - pOrigin.z) / pDirection.z;
+
+	float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
+	float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
+
+	if (tmax < 0)
+	{
+		//return false;
+		std::cout << "wrong\n";
+		return;
+	}
+	if (tmin > tmax) {
+		//return false;
+		std::cout << "wrong\n";
+		return;
+	}
+	std::cout << "hit\n";
+	//return true;
+	//being weird when rotating camera...
 }
 
 void GameEntity::SetWorldMatrix(XMFLOAT4X4 pWorldMatrix) {

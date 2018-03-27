@@ -218,17 +218,17 @@ void Game::Update(float deltaTime, float totalTime)
 	float multiplier = .001f;
 	float offset = .1f;
 
-	//body hover
-	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
-	//eyball hover
-	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
-	for (int i = 2; i <= 3; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
-	}
-	//tentacle hover
-	for (int i = 4; i <= 11; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
-	}
+	////body hover
+	//gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
+	////eyball hover
+	//gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
+	//for (int i = 2; i <= 3; i++) {
+	//	gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
+	//}
+	////tentacle hover
+	//for (int i = 4; i <= 11; i++) {
+	//	gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
+	//}
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
@@ -365,6 +365,7 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 	XMStoreFloat3(&rayDirectionF, rayDirection);
 	XMFLOAT3 rayOriginF; //position is half of what the actual camera position is...so *shrugs* worth a shot
 	XMStoreFloat3(&rayOriginF, rayOrigin);
+	gameEntities[0]->TestPick(cam->GetPosition(), rayDirectionF);//put in camera position instead of calculated one
 	//std::cout << rayOriginF.x << " "  << rayOriginF.y << " " << rayOriginF.z << "\n";
 	//std::cout << cam->GetPosition().x << " " << cam->GetPosition().y <<" " << cam->GetPosition().z << "\n";
 	//std::cout << rayDirectionF.x<< " " << rayDirectionF.y << " " << rayDirectionF.z << "\n";

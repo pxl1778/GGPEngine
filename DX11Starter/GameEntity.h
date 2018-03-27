@@ -27,7 +27,7 @@ public:
 	void Rotate(DirectX::XMFLOAT3 pRotate);
 	void Scale(DirectX::XMFLOAT3 pScale);
 
-	void TestPick(DirectX::XMVECTOR pOrigin, DirectX::XMVECTOR pDirection);
+	void TestPick(DirectX::XMFLOAT3 pOrigin, DirectX::XMFLOAT3 pDirection);
 
 	void CalculateWorldMatrix();
 	void Draw(ID3D11DeviceContext* pContext, Camera* pCam);
