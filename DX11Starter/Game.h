@@ -9,7 +9,11 @@
 #include <DirectXMath.h>
 #include "WICTextureLoader.h"
 #include <vector>
+
 #include "Creature.h"
+
+#include "UIButton.h"
+
 
 class Game 
 	: public DXCore
@@ -37,6 +41,7 @@ private:
 	void LoadShaders(); 
 	void CreateMatrices();
 	void CreateBasicGeometry();
+	void CreateUIButtons();
 
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;
@@ -90,7 +95,15 @@ private:
 	DirectionalLight dLight2;
 	PointLight pLight1;
 
+
 	//main character
 	Creature* guy;
+
+	// UI Button
+	UIButton* feedButton;
+
+	bool isFeeding;
+	float isFeedingDuration;
+
 };
 

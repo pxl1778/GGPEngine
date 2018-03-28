@@ -38,7 +38,11 @@
     <ClCompile Include="Material.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+
     <ClCompile Include="Creature.cpp">
+
+    <ClCompile Include="UIButton.cpp">
+
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -73,7 +77,11 @@
     <ClInclude Include="GameStates.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+
     <ClInclude Include="Creature.h">
+
+    <ClInclude Include="UIButton.h">
+
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -84,10 +92,17 @@
     <FxCompile Include="VertexShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+
     <FxCompile Include="SkyBoxPixelShader.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
     <FxCompile Include="SkyBoxVertexShader.hlsl">
+
+    <FxCompile Include="UI_PS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="UI_VS.hlsl">
+
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>
