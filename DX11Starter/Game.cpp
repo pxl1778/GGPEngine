@@ -53,13 +53,13 @@ Game::~Game()
 	delete m5; 
 	delete m6;
 
-	delete abominationBody;
-	delete abominationEyeball;
-	delete abomincationTentacle;
+
+	
 	delete SkyBoxPixelShader;
 	delete SkyBoxVertexShader;
 
 	delete mat1;
+	
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
@@ -69,12 +69,18 @@ Game::~Game()
 
 	sampler->Release();
 	wallTexture->Release();
+	wallNormal->Release();
 	skyBoxRastState->Release();
 	skyBoxDepthState->Release();
+	
 
 	delete cam;
 
+
+	delete guy;
+
 	delete feedButton;
+
 }
 
 // --------------------------------------------------------
@@ -90,9 +96,9 @@ void Game::Init()
 	LoadShaders();
 	CreateMatrices();
 	CreateBasicGeometry();
+	
 
-	// Load the sky box from a DDS file
-	CreateDDSTextureFromFile(device, L"Textures/BackGroundPlaceholder.dds", 0, &skyBoxSRV);
+	
 
 	// Create a sampler state that holds options for sampling
 	// The descriptions should always just be local variables	
@@ -117,8 +123,11 @@ void Game::Init()
 	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 
-	isFeeding = false;
-	isFeedingDuration = 0;
+	guy = new Creature(device, context, sampler);
+
+
+
+
 }
 
 // --------------------------------------------------------
@@ -132,6 +141,13 @@ void Game::LoadShaders()
 	//Loading Textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
+
+
+	
+
+	// Load the sky box from a DDS file
+	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
+
 	D3D11_SAMPLER_DESC sd = {};
 	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -139,14 +155,20 @@ void Game::LoadShaders()
 	sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sd.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&sd, &sampler);
+
+
 	//Material 1
 	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
-	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader");
-	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader");
+
+	
+
+	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
+	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 
@@ -186,9 +208,7 @@ void Game::CreateBasicGeometry()
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
 
-	abominationBody = new Mesh("../Assets/Models/abomination1/body.obj", device);
-	abominationEyeball = new Mesh("../Assets/Models/abomination1/eyeball.obj", device);
-	abomincationTentacle = new Mesh("../Assets/Models/abomination1/tentacle.obj", device);
+	
 
 	//gameEntities.push_back(new GameEntity(m1, mat1));
 	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
@@ -197,37 +217,7 @@ void Game::CreateBasicGeometry()
 	//gameEntities.push_back(new GameEntity(m3, mat1));
 	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
 
-	//1 body
-	gameEntities.push_back(new GameEntity(abominationBody, mat1));
-	//3 eyes
-	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities[2]->Translate(XMFLOAT3(-1.1f, .4f, -.8f));
-	gameEntities[2]->Scale(XMFLOAT3(.7f, .7f, .7f));
-	gameEntities[3]->Translate(XMFLOAT3(1.1f, .4f, -.8f));
-	gameEntities[3]->Scale(XMFLOAT3(.7f, .7f, .7f));
-	//8 tentacles
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[5]->Rotate(XMFLOAT3(0, XM_PI, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[6]->Rotate(XMFLOAT3(0, XM_PI/4, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[7]->Rotate(XMFLOAT3(0, 3*XM_PI/4, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[8]->Rotate(XMFLOAT3(0, XM_PI/2, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[9]->Rotate(XMFLOAT3(0, 5*XM_PI/4, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[10]->Rotate(XMFLOAT3(0, 3*XM_PI/2, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[11]->Rotate(XMFLOAT3(0, 7*XM_PI/4, 0));
-
-	//models are big, scale em down
-	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
-		(*it)->Scale(XMFLOAT3(.5, .5, .5));
-	}
+	
 }
 
 void Game::CreateUIButtons()
@@ -267,41 +257,16 @@ void Game::Update(float deltaTime, float totalTime)
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
 
-	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
-	float multiplier = .001f;
-	float offset = .1f;
+	guy->Update(deltaTime, totalTime);
 
-	// check if isFeeding 'state' is active
-	if (isFeeding) {
-		// start feeding timer
-		isFeedingDuration += deltaTime;
 
-		// reset appropriate variables if we are done feeding
-		if (isFeedingDuration > 3.0f) {
-			isFeeding = false;
-			isFeedingDuration = 0;
-		}
-		// else, while feeding, do something
-		else {
-			multiplier = 0.005f;
-		}
-	}
 
-	//body hover
-	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
-	//eyball hover
-	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
-	for (int i = 2; i <= 3; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
-	}
-	//tentacle hover
-	for (int i = 4; i <= 11; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
-	}
+	
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
+
 	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
@@ -325,23 +290,35 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
-	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+
+	/*for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
-	}
+
+	}*/
+
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
+	//guy->Draw(context, cam);
+
+	
 
 
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
+
+	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
+	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
+
 	// Draw Feed Button
 	feedButton->Draw(context, cam->GetProjectionMatrix());
 
-	ID3D11Buffer* skyVB = m2->GetVertexBuffer();
-	ID3D11Buffer* skyIB = m2->GetIndexBuffer();
+
 	
 	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
 	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
@@ -353,11 +330,13 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
 	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
+	//SkyBoxPixelShader->CopyAllBufferData();
 	SkyBoxPixelShader->SetShader();
 	
 	context->RSSetState(skyBoxRastState);
 	context->OMSetDepthStencilState(skyBoxDepthState, 0);
-	//context->DrawIndexed(m2->GetIndexCount(), 0, 0);
+	int test = m4->GetIndexCount();
+	context->DrawIndexed(test, 0, 0);
 	
 	// At the end of the frame, reset render states
 	context->RSSetState(0);
@@ -386,7 +365,7 @@ void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 
 	// RED FLAG: Hard-coded values atm - YIKES!
 	if (x >= 31 && x <= 118 && y >= 99 && y <= 186) {
-		isFeeding = true;
+		guy->isFeeding = true;
 		printf("\nYou fed the thing");
 	}
 

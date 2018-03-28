@@ -9,7 +9,11 @@
 #include <DirectXMath.h>
 #include "WICTextureLoader.h"
 #include <vector>
+
+#include "Creature.h"
+
 #include "UIButton.h"
+
 
 class Game 
 	: public DXCore
@@ -64,20 +68,19 @@ private:
 	Mesh* m6;
 	Mesh* Box;
 
-	//Abomination meshes
-	Mesh* abominationEyeball;
-	Mesh* abominationBody;
-	Mesh* abomincationTentacle;
+	
 
 	//Materials
 	Material* mat1;
 	Material* SkyBoxMat;
+	
 
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
 	ID3D11ShaderResourceView* wallNormal;
 	ID3D11ShaderResourceView* skyBoxSRV;
 	ID3D11SamplerState* sampler;
+
 
 	ID3D11RasterizerState* skyBoxRastState;
 	ID3D11DepthStencilState* skyBoxDepthState;
@@ -92,10 +95,14 @@ private:
 	DirectionalLight dLight2;
 	PointLight pLight1;
 
+
+	//main character
+	Creature* guy;
+
 	// UI Button
 	UIButton* feedButton;
 
-	bool isFeeding;
-	float isFeedingDuration;
+
+
 };
 
