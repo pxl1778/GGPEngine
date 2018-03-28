@@ -1,8 +1,4 @@
-﻿  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\PixelShader.cso
-  Game.cpp
+﻿  compilation object save succeeded; see Z:\IGMProfile\Desktop\GitHub\GGPEngine\x64\Debug\PixelShader.cso
   Creature.cpp
-c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(68): warning C4305: 'argument': truncation from 'double' to 'float'
-  Generating Code...
-  Skipping... (no relevant changes detected)
-  Main.cpp
-  DX11Starter.vcxproj -> C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe
+z:\igmprofile\desktop\github\ggpengine\dx11starter\creature.cpp(68): warning C4305: 'argument': truncation from 'double' to 'float'
+  DX11Starter.vcxproj -> Z:\IGMProfile\Desktop\GitHub\GGPEngine\x64\Debug\DX11Starter.exe

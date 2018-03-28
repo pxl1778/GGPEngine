@@ -249,15 +249,18 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+
 	/*for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
 	}*/
 
-	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
-	guy->Draw(context, cam);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
+	//guy->Draw(context, cam);
 
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);

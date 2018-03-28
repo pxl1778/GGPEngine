@@ -122,13 +122,13 @@ void Creature::Update(float deltaTime, float totalTime)
 }
 
 //for now draw method is hard coded to accept the right amount of lights in the scene; this will need to be changed if we change the lights
-void Creature::Draw(ID3D11DeviceContext * context, Camera * cam)
+void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1)
 {
 	//some colors to send to shader depending on guy's mood
-	XMFLOAT4 white = XMFLOAT4(0.00, 0.0, 0.0, 1.0);
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
 	XMFLOAT4 red = XMFLOAT4(1.0, 0.0, 0.0, 1.0);
 	XMFLOAT4 blue = XMFLOAT4(0, 0, 1, 1);
-	XMFLOAT4 color;
+	XMFLOAT4 color = white;
 
 	switch (guyState) {
 		case Neutral:
