@@ -15,9 +15,13 @@ public:
 	Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11SamplerState* sampler);
 	~Creature();
 	void Update(float deltaTime, float totalTime);
-	void Draw(ID3D11DeviceContext* context, Camera* cam, DirectionalLight* dLight1, DirectionalLight* dLight2, PointLight* pLight1);
+	void Draw(ID3D11DeviceContext* context, Camera* cam);
 	//Entities
 	std::vector<GameEntity*> gameEntities;
+
+	//creature state stuff
+	enum CreatureState{Neutral, Happy, Angry};
+	CreatureState guyState;
 
 private:
 
@@ -36,6 +40,9 @@ private:
 	Material* tentacleMat;
 	Material* bodyMat;
 	Material* eyeMat;
+
+	//Lights
+	DirectionalLight dLight1;
 
 	
 };

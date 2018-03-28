@@ -3,6 +3,7 @@
 using namespace DirectX;
 
 
+
 Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11SamplerState* sampler)
 {
 	//loading textures
@@ -63,6 +64,9 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 		(*it)->Scale(XMFLOAT3(.5, .5, .5));
 	}
 
+	//let there be light
+	dLight1 = DirectionalLight({ XMFLOAT4(43.0/255.0, 61.0/255.0, 91.0/255.0, 1.0f), XMFLOAT4(251.0/255.0, 252.0/255.0, 234.0/255.0, 1.0f), XMFLOAT3(1.0f, -1.0f, 0) });
+
 }
 
 
@@ -90,6 +94,12 @@ Creature::~Creature()
 
 void Creature::Update(float deltaTime, float totalTime)
 {
+	//temp code to switch guy states
+	if (GetAsyncKeyState('0')) guyState = Angry;
+	if (GetAsyncKeyState('9')) guyState = Happy;
+	if (GetAsyncKeyState('8')) guyState = Neutral;
+
+
 	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
 	float multiplier = .001f;
 	float offset = .1f;
@@ -112,14 +122,32 @@ void Creature::Update(float deltaTime, float totalTime)
 }
 
 //for now draw method is hard coded to accept the right amount of lights in the scene; this will need to be changed if we change the lights
-void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight1, DirectionalLight* dLight2, PointLight* pLight1)
+void Creature::Draw(ID3D11DeviceContext * context, Camera * cam)
 {
-	
+	//some colors to send to shader depending on guy's mood
+	XMFLOAT4 white = XMFLOAT4(0.00, 0.0, 0.0, 1.0);
+	XMFLOAT4 red = XMFLOAT4(1.0, 0.0, 0.0, 1.0);
+	XMFLOAT4 blue = XMFLOAT4(0, 0, 1, 1);
+	XMFLOAT4 color;
+
+	switch (guyState) {
+		case Neutral:
+			color = white;
+			break;
+		case Angry:
+			color = red;
+			break;
+		case Happy:
+			color = blue;
+			break;
+	}
+
 	//draw all entities
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &color, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
 	}
 	

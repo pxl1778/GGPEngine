@@ -1,2 +1,8 @@
-﻿  Creature.cpp
+﻿  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\PixelShader.cso
+  Game.cpp
+  Creature.cpp
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(68): warning C4305: 'argument': truncation from 'double' to 'float'
+  Generating Code...
+  Skipping... (no relevant changes detected)
+  Main.cpp
   DX11Starter.vcxproj -> C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe
