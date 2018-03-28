@@ -1,4 +1,4 @@
-﻿  compilation object save succeeded; see Z:\IGMProfile\Desktop\GitHub\GGPEngine\x64\Debug\PixelShader.cso
-  Creature.cpp
-z:\igmprofile\desktop\github\ggpengine\dx11starter\creature.cpp(68): warning C4305: 'argument': truncation from 'double' to 'float'
+﻿  compilation object save succeeded; see Z:\IGMProfile\Desktop\GitHub\GGPEngine\x64\Debug\UI_PS.cso
+  compilation object save succeeded; see Z:\IGMProfile\Desktop\GitHub\GGPEngine\x64\Debug\UI_VS.cso
+  UIButton.cpp
   DX11Starter.vcxproj -> Z:\IGMProfile\Desktop\GitHub\GGPEngine\x64\Debug\DX11Starter.exe

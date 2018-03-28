@@ -102,8 +102,7 @@ private:
 	// UI Button
 	UIButton* feedButton;
 
-	bool isFeeding;
-	float isFeedingDuration;
+
 
 };
 

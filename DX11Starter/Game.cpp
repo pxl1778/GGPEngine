@@ -126,8 +126,7 @@ void Game::Init()
 	guy = new Creature(device, context, sampler);
 
 
-	isFeeding = false;
-	isFeedingDuration = 0;
+
 
 }
 
@@ -261,33 +260,8 @@ void Game::Update(float deltaTime, float totalTime)
 	guy->Update(deltaTime, totalTime);
 
 
-	// check if isFeeding 'state' is active
-	if (isFeeding) {
-		// start feeding timer
-		isFeedingDuration += deltaTime;
 
-		// reset appropriate variables if we are done feeding
-		if (isFeedingDuration > 3.0f) {
-			isFeeding = false;
-			isFeedingDuration = 0;
-		}
-		// else, while feeding, do something
-		else {
-			multiplier = 0.005f;
-		}
-	}
-
-	//body hover
-	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
-	//eyball hover
-	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
-	for (int i = 2; i <= 3; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
-	}
-	//tentacle hover
-	for (int i = 4; i <= 11; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
-	}
+	
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
@@ -330,7 +304,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
 	//guy->Draw(context, cam);
 
-	}
+	
 
 
 	// Render the sky (after all opaque geometry)
@@ -344,8 +318,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Draw Feed Button
 	feedButton->Draw(context, cam->GetProjectionMatrix());
 
-	ID3D11Buffer* skyVB = m2->GetVertexBuffer();
-	ID3D11Buffer* skyIB = m2->GetIndexBuffer();
 
 	
 	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
@@ -393,7 +365,7 @@ void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 
 	// RED FLAG: Hard-coded values atm - YIKES!
 	if (x >= 31 && x <= 118 && y >= 99 && y <= 186) {
-		isFeeding = true;
+		guy->isFeeding = true;
 		printf("\nYou fed the thing");
 	}
 

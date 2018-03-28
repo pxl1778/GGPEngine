@@ -67,6 +67,9 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	//let there be light
 	dLight1 = DirectionalLight({ XMFLOAT4(43.0/255.0, 61.0/255.0, 91.0/255.0, 1.0f), XMFLOAT4(251.0/255.0, 252.0/255.0, 234.0/255.0, 1.0f), XMFLOAT3(1.0f, -1.0f, 0) });
 
+	isFeeding = false;
+	isFeedingDuration = 0;
+
 }
 
 
@@ -103,6 +106,23 @@ void Creature::Update(float deltaTime, float totalTime)
 	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
 	float multiplier = .001f;
 	float offset = .1f;
+
+
+	// check if isFeeding 'state' is active
+	if (isFeeding) {
+		// start feeding timer
+		isFeedingDuration += deltaTime;
+
+		// reset appropriate variables if we are done feeding
+		if (isFeedingDuration > 3.0f) {
+			isFeeding = false;
+			isFeedingDuration = 0;
+		}
+		// else, while feeding, do something
+		else {
+			multiplier = 0.005f;
+		}
+	}
 
 	//body hover
 	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));

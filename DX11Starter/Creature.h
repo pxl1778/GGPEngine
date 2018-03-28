@@ -23,6 +23,8 @@ public:
 	enum CreatureState{Neutral, Happy, Angry};
 	CreatureState guyState;
 
+	bool isFeeding;
+
 private:
 
 	//texture stuff
@@ -43,6 +45,9 @@ private:
 
 	//Lights
 	DirectionalLight dLight1;
+
+	
+	float isFeedingDuration;
 
 	
 };
