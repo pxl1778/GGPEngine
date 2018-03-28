@@ -15,3 +15,8 @@ struct Vertex
 	DirectX::XMFLOAT3 Normal;
 	DirectX::XMFLOAT3 Tangent;
 };
+
+struct UIVertex {
+	DirectX::XMFLOAT3 Position;
+	DirectX::XMFLOAT4 Color;
+};

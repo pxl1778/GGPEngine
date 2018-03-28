@@ -7,6 +7,7 @@
 #include "SpriteFont.h"
 #include "SimpleMath.h"
 #include <DirectXMath.h>
+#include "UIButton.h"
 
 // We can include the correct library files here
 // instead of in Visual Studio settings if we want
@@ -99,6 +100,11 @@ private:
 	DirectX::SimpleMath::Vector2 m_fontPos;
 	DirectX::SimpleMath::Vector2 m_fontPos2;
 	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
+
+	// UI Buttons
+	//UIButton* button1;
+
+	void CreateUIButtons();
 
 	void UpdateTimer();			// Updates the timer for this frame
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
