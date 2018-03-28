@@ -1,10 +1,10 @@
+
 // Constant Buffer for external (C++) data
 cbuffer externalData : register(b0)
 {
 	matrix view;
 	matrix projection;
 };
-
 
 // Struct representing a single vertex worth of data
 struct VertexShaderInput
@@ -22,13 +22,15 @@ struct VertexToPixel
 	float3 sampleDir	: TEXCOORD;
 };
 
+// --------------------------------------------------------
+// The entry point (main method) for our vertex shader
+// --------------------------------------------------------
 VertexToPixel main(VertexShaderInput input)
 {
 	// Set up output
 	VertexToPixel output;
 
 	matrix viewNoTranslation = view;
-	//set the translation to 0
 	viewNoTranslation._41 = 0;
 	viewNoTranslation._42 = 0;
 	viewNoTranslation._43 = 0;
