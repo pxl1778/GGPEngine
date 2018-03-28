@@ -74,6 +74,7 @@ Game::~Game()
 
 	delete cam;
 
+	delete feedButton;
 }
 
 // --------------------------------------------------------
@@ -85,6 +86,7 @@ void Game::Init()
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
+	CreateUIButtons();
 	LoadShaders();
 	CreateMatrices();
 	CreateBasicGeometry();
@@ -115,7 +117,8 @@ void Game::Init()
 	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 
-
+	isFeeding = false;
+	isFeedingDuration = 0;
 }
 
 // --------------------------------------------------------
@@ -146,6 +149,8 @@ void Game::LoadShaders()
 	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader");
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
+
+	feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");
 }
 
 
@@ -225,6 +230,21 @@ void Game::CreateBasicGeometry()
 	}
 }
 
+void Game::CreateUIButtons()
+{
+	UIVertex vertices1[] = {
+		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+	};
+
+	int indices[] = { 0, 1, 2, 3, 4, 5 };
+
+	feedButton = new UIButton(vertices1, 6, indices, 6, device);
+}
 
 // --------------------------------------------------------
 // Handle resizing DirectX "stuff" to match the new window size.
@@ -250,6 +270,22 @@ void Game::Update(float deltaTime, float totalTime)
 	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
 	float multiplier = .001f;
 	float offset = .1f;
+
+	// check if isFeeding 'state' is active
+	if (isFeeding) {
+		// start feeding timer
+		isFeedingDuration += deltaTime;
+
+		// reset appropriate variables if we are done feeding
+		if (isFeedingDuration > 3.0f) {
+			isFeeding = false;
+			isFeedingDuration = 0;
+		}
+		// else, while feeding, do something
+		else {
+			multiplier = 0.005f;
+		}
+	}
 
 	//body hover
 	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
@@ -297,11 +333,12 @@ void Game::Draw(float deltaTime, float totalTime)
 	}
 
 
-
-
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
+
+	// Draw Feed Button
+	feedButton->Draw(context, cam->GetProjectionMatrix());
 
 	ID3D11Buffer* skyVB = m2->GetVertexBuffer();
 	ID3D11Buffer* skyIB = m2->GetIndexBuffer();
@@ -325,8 +362,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	// At the end of the frame, reset render states
 	context->RSSetState(0);
 	context->OMSetDepthStencilState(0, 0);
-	
-
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -345,6 +380,15 @@ void Game::Draw(float deltaTime, float totalTime)
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
+	//if (prevMousePos.x > 0.5 && prevMousePos.y > 0.5) {
+	//	printf("%d \n", prevMousePos.y);
+	//}
+
+	// RED FLAG: Hard-coded values atm - YIKES!
+	if (x >= 31 && x <= 118 && y >= 99 && y <= 186) {
+		isFeeding = true;
+		printf("\nYou fed the thing");
+	}
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
