@@ -10,7 +10,7 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
 	position = XMFLOAT3(0, 0, 0);
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
-	box = BoundingBox({ {-1, 0, -1}, {1, 2, 1} });
+	box = BoundingBox({ pMeshPointer->getMaxSize(), pMeshPointer->getMinSize() });
 }
 
 
@@ -45,30 +45,38 @@ XMFLOAT3 GameEntity::GetScale() {
 
 void GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
 	//https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
-	float t1 = (box.min.x - pOrigin.x) / pDirection.x;
-	float t2 = (box.max.x - pOrigin.x) / pDirection.x;
-	float t3 = (box.min.y - pOrigin.y) / pDirection.y;
-	float t4 = (box.max.y - pOrigin.y) / pDirection.y;
-	float t5 = (box.min.z - pOrigin.z) / pDirection.z;
-	float t6 = (box.max.z - pOrigin.z) / pDirection.z;
-
-	float tmin = max(max(min(t1, t2), min(t3, t4)), min(t5, t6));
-	float tmax = min(min(max(t1, t2), max(t3, t4)), max(t5, t6));
-
-	if (tmax < 0)
-	{
-		//return false;
-		std::cout << "wrong\n";
-		return;
+	//https://www.youtube.com/watch?v=4h-jlOBsndU&t=1039s
+	float txMin = (box.min.x - pOrigin.x) / pDirection.x;
+	float txMax = (box.max.x - pOrigin.x) / pDirection.x;
+	if (txMax < txMin) {
+		float temp = txMax;
+		txMax = txMin;
+		txMin = temp;
 	}
-	if (tmin > tmax) {
-		//return false;
-		std::cout << "wrong\n";
-		return;
+	float tyMin = (box.min.y - pOrigin.y) / pDirection.y;
+	float tyMax = (box.max.y - pOrigin.y) / pDirection.y;
+	if (tyMax < tyMin) {
+		float temp = tyMax;
+		tyMax = tyMin;
+		tyMin = temp;
 	}
+	float tzMin = (box.min.z - pOrigin.z) / pDirection.z;
+	float tzMax = (box.max.z - pOrigin.z) / pDirection.z;
+	if (tzMax < tzMin) {
+		float temp = tzMax;
+		tzMax = tzMin;
+		tzMin = temp;
+	}
+
+	float tMin = (txMin > tyMin) ? txMin : tyMin;
+	float tMax = (txMax < tyMax) ? txMax : tyMax;
+
+	if (txMin > tyMax || tyMin > txMax) { std::cout << "wrong\n"; return; }
+	if (tMin > tzMax || tzMin > tMax) { std::cout << "wrong\n"; return; }
+	if (tzMin > tMin) { tMin = tzMin; }
+	if (tzMax < tMax) { tMax = tzMax; }
+
 	std::cout << "hit\n";
-	//return true;
-	//being weird when rotating camera...
 }
 
 void GameEntity::SetWorldMatrix(XMFLOAT4X4 pWorldMatrix) {
@@ -91,6 +99,10 @@ void GameEntity::SetScale(XMFLOAT3 pScale) {
 void GameEntity::Translate(XMFLOAT3 pTranslate) {
 	XMVECTOR newPosition = XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&pTranslate));
 	XMStoreFloat3(&position, newPosition);
+	XMVECTOR newMax = XMVectorAdd(XMLoadFloat3(&box.max), XMLoadFloat3(&pTranslate));
+	XMStoreFloat3(&box.max, newMax);
+	XMVECTOR newMin = XMVectorAdd(XMLoadFloat3(&box.min), XMLoadFloat3(&pTranslate));
+	XMStoreFloat3(&box.min, newMin);
 }
 
 //Adds the given XMFLOAT3 to the current rotation
@@ -103,6 +115,10 @@ void GameEntity::Rotate(XMFLOAT3 pRotate) {
 void GameEntity::Scale(XMFLOAT3 pScale) {
 	XMVECTOR newScale = XMVectorMultiply(XMLoadFloat3(&this->scale), XMLoadFloat3(&pScale));
 	XMStoreFloat3(&this->scale, newScale);
+	XMVECTOR newMax = XMVectorMultiply(XMLoadFloat3(&box.max), XMLoadFloat3(&pScale));
+	XMStoreFloat3(&box.max, newMax);
+	XMVECTOR newMin = XMVectorMultiply(XMLoadFloat3(&box.min), XMLoadFloat3(&pScale));
+	XMStoreFloat3(&box.min, newMin);
 }
 
 //Calculates the world matrix for this game entity

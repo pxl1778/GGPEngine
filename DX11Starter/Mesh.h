@@ -13,6 +13,9 @@ public:
 	Mesh(Vertex* vertArray, int vertCount, unsigned* indices, int indicesCount, ID3D11Device* device);
 	Mesh(char* pFileName, ID3D11Device* device);
 	~Mesh();
+	DirectX::XMFLOAT3 getMinSize();
+	DirectX::XMFLOAT3 getMaxSize();
+
 	ID3D11Buffer* GetVertexBuffer();
 	ID3D11Buffer* GetIndexBuffer();
 
@@ -23,5 +26,7 @@ private:
 	ID3D11Buffer* indexBuffer;
 
 	int indicesCount;
+	DirectX::XMFLOAT3 minSize;
+	DirectX::XMFLOAT3 maxSize;
 };
 

@@ -48,6 +48,8 @@ Mesh::Mesh(Vertex* vertArray, int vertCount, unsigned* indices, int indicesCount
 	// Actually create the buffer with the initial data
 	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
 	device->CreateBuffer(&ibd, &initialIndexData, &indexBuffer);
+	minSize = { -1, -1, -1 };
+	maxSize = { 1, 1, 1 };
 }
 
 Mesh::Mesh(char* pFileName, ID3D11Device* device) {
@@ -67,7 +69,8 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 	unsigned int vertCounter = 0;        // Count of vertices/indices
 	char chars[100];                     // String for line reading
 
-										 // Still have data left?
+	minSize = { 500, 500, 500 };
+	maxSize = { -500, -500, -500 };
 
 	while (obj.good())
 	{
@@ -110,6 +113,12 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 
 			// Add to the positions
 			positions.push_back(pos);
+			if (pos.x > maxSize.x) maxSize.x = pos.x;
+			if (pos.x < minSize.x) minSize.x = pos.x;
+			if (pos.y > maxSize.y) maxSize.y = pos.y;
+			if (pos.y < minSize.y) minSize.y = pos.y;
+			if (pos.z > maxSize.z) maxSize.z = pos.z;
+			if (pos.z < minSize.z) minSize.z = pos.z;
 		}
 		else if (chars[0] == 'f')
 		{
@@ -330,6 +339,14 @@ Mesh::~Mesh()
 	//Gotta release those DX11 things!
 	if (vertexBuffer) { vertexBuffer->Release(); }
 	if (indexBuffer) { indexBuffer->Release(); }
+}
+
+XMFLOAT3 Mesh::getMinSize() {
+	return minSize;
+}
+
+XMFLOAT3 Mesh::getMaxSize() {
+	return maxSize;
 }
 
 ID3D11Buffer* Mesh::GetVertexBuffer()

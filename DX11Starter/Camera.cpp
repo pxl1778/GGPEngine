@@ -11,7 +11,7 @@ Camera::Camera()
 	//    camera and the direction vector along which to look (as well as "up")
 	// - Another option is the LOOK AT function, to look towards a specific
 	//    point in 3D space
-	XMVECTOR pos = XMVectorSet(0, 0, -5, 0);
+	XMVECTOR pos = XMVectorSet(0, 0, -20, 0);
 	XMVECTOR dir = XMVectorSet(0, 0, 1, 0);
 	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 	XMMATRIX V = XMMatrixLookToLH(
@@ -20,7 +20,7 @@ Camera::Camera()
 		up);     // "Up" direction in 3D space (prevents roll)
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(V)); // Transpose for HLSL!
 	XMStoreFloat4x4(&projectionMatrix, XMMatrixIdentity());
-	position = XMFLOAT3(0, 0, -5);
+	position = XMFLOAT3(0, 0, -20);
 	direction = XMFLOAT3(0, 0, 1);
 	rotationX = 0;
 	rotationY = 0;
