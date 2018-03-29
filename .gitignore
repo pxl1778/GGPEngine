@@ -17,6 +17,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Visual Studio 2017 cache/options directory
+.vs/
+
 # =========================
 # Operating System Files
 # =========================
