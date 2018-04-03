@@ -76,7 +76,11 @@ Game::~Game()
 
 	delete cam;
 
+
 	delete guy;
+
+	delete feedButton;
+
 }
 
 // --------------------------------------------------------
@@ -88,6 +92,7 @@ void Game::Init()
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
+	CreateUIButtons();
 	LoadShaders();
 	CreateMatrices();
 	CreateBasicGeometry();
@@ -121,6 +126,8 @@ void Game::Init()
 	guy = new Creature(device, context, sampler);
 
 
+
+
 }
 
 // --------------------------------------------------------
@@ -134,7 +141,14 @@ void Game::LoadShaders()
 	//Loading Textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
+<<<<<<< HEAD
 
+=======
+
+
+	
+
+>>>>>>> 83841f87e233bd3764dd1a24a31797509ecc87c0
 	// Load the sky box from a DDS file
 	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
 
@@ -154,10 +168,20 @@ void Game::LoadShaders()
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
 
+<<<<<<< HEAD
+	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
+	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+=======
+	
+
 	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
 	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
 
+>>>>>>> 83841f87e233bd3764dd1a24a31797509ecc87c0
+
 	//mat1->GetPixelShader()->SetShaderResourceView("");
+
+	feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");
 }
 
 
@@ -205,6 +229,21 @@ void Game::CreateBasicGeometry()
 	
 }
 
+void Game::CreateUIButtons()
+{
+	UIVertex vertices1[] = {
+		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+	};
+
+	int indices[] = { 0, 1, 2, 3, 4, 5 };
+
+	feedButton = new UIButton(vertices1, 6, indices, 6, device);
+}
 
 // --------------------------------------------------------
 // Handle resizing DirectX "stuff" to match the new window size.
@@ -228,6 +267,14 @@ void Game::Update(float deltaTime, float totalTime)
 		Quit();
 
 	guy->Update(deltaTime, totalTime);
+
+
+
+	
+
+	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+		(*it)->CalculateWorldMatrix();
+	}
 
 	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
@@ -260,17 +307,27 @@ void Game::Draw(float deltaTime, float totalTime)
 		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
+
 	}*/
 
 	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
 	//guy->Draw(context, cam);
 
+	
+
+
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
+
 	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
 	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
+
+	// Draw Feed Button
+	feedButton->Draw(context, cam->GetProjectionMatrix());
+
+
 	
 	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
 	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
@@ -293,8 +350,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	// At the end of the frame, reset render states
 	context->RSSetState(0);
 	context->OMSetDepthStencilState(0, 0);
-	
-
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -313,6 +368,15 @@ void Game::Draw(float deltaTime, float totalTime)
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
+	//if (prevMousePos.x > 0.5 && prevMousePos.y > 0.5) {
+	//	printf("%d \n", prevMousePos.y);
+	//}
+
+	// RED FLAG: Hard-coded values atm - YIKES!
+	if (x >= 31 && x <= 118 && y >= 99 && y <= 186) {
+		guy->isFeeding = true;
+		printf("\nYou fed the thing");
+	}
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;

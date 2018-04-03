@@ -3,6 +3,8 @@
 #include <WindowsX.h>
 #include <sstream>
 
+using namespace DirectX;
+
 // Define the static instance variable so our OS-level 
 // message handling function below can talk to our object
 DXCore* DXCore::DXCoreInstance = 0;
@@ -60,6 +62,11 @@ DXCore::DXCore(
 	// Initialize game state to start menu
 	gs = START_MENU;
 
+	// Create UIButtons
+	//CreateUIButtons();
+	// Load UIButton Shaders
+	//button1->LoadShaders(device, context, "Oh wait", "I'm trolling");
+
 	// Query performance counter for accurate timing information
 	__int64 perfFreq;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&perfFreq);
@@ -81,6 +88,8 @@ DXCore::~DXCore()
 
 	m_font.reset();
 	m_spriteBatch.reset();
+
+	//delete button1;
 }
 
 // --------------------------------------------------------
@@ -405,6 +414,7 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
+					// Display some text for Start Menu game state
 					m_spriteBatch->Begin();
 					const wchar_t* output = L"Start";
 					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
@@ -452,6 +462,28 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
+					// Draw UIButtons
+					//UINT UIstride = sizeof(UIVertex);
+					//UINT offset = 0;
+					//
+					//ID3D11Buffer* button1VB = button1->GetVertexBuffer();
+					//ID3D11Buffer* button1IB = button1->GetIndexBuffer();
+					//
+					//context->IASetVertexBuffers(0, 1, &button1VB, &UIstride, &offset);
+					//context->IASetIndexBuffer(button1IB, DXGI_FORMAT_R32_UINT, 0);
+					//
+					////button1->GetVertexShader()->SetMatrix4x4("projection", );
+					//
+					//button1->GetVertexShader()->CopyAllBufferData();
+					//
+					//button1->GetVertexShader()->SetShader();
+					//button1->GetPixelShader()->SetShader();
+					//
+					//context->DrawIndexed(button1->GetIndexCount(), // The number of indices to use (we could draw a subset if we wanted)
+					//	0,     // Offset to the first index we want to use
+					//	0);    // Offset to add to each index when looking up vertices
+					
+					// Display some text for Pause Menu game state
 					m_spriteBatch->Begin();
 					const wchar_t* output = L"Paused";
 					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
@@ -493,6 +525,7 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
+					// Display text for GAME OVER game state
 					m_spriteBatch->Begin();
 					const wchar_t* output = L"GAME OVER";
 					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
@@ -543,6 +576,22 @@ void DXCore::Quit()
 	PostMessage(this->hWnd, WM_CLOSE, NULL, NULL);
 }
 
+
+void DXCore::CreateUIButtons()
+{
+	UIVertex vertices1[] = {
+		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+	};
+
+	int indices[] = { 0, 1, 2, 3, 4, 5 };
+
+	//button1 = new UIButton(vertices1, 6, indices, 6, device);
+}
 
 // --------------------------------------------------------
 // Uses high resolution time stamps to get very accurate
