@@ -214,6 +214,9 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 		}
 	}
 
+	XMStoreFloat3(&center, XMVectorDivide(XMVectorAdd(XMLoadFloat3(&maxSize), XMLoadFloat3(&minSize)), XMVectorSet(2.0f, 2.0f, 2.0f, 0.0f)));
+	XMStoreFloat3(&extents, XMVectorDivide(XMVectorSubtract(XMLoadFloat3(&maxSize), XMLoadFloat3(&minSize)), XMVectorSet(2.0f, 2.0f, 2.0f, 0.0f)));
+
 	// Close the file and create the actual buffers
 	obj.close();
 
@@ -347,6 +350,14 @@ XMFLOAT3 Mesh::getMinSize() {
 
 XMFLOAT3 Mesh::getMaxSize() {
 	return maxSize;
+}
+
+XMFLOAT3 Mesh::getExtents() {
+	return extents;
+}
+
+XMFLOAT3 Mesh::getCenter() {
+	return center;
 }
 
 ID3D11Buffer* Mesh::GetVertexBuffer()

@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Vertex.h"
+#include "DirectXCollision.h"
 
 // For the DirectX Math library
 using namespace DirectX;
@@ -152,16 +153,8 @@ void Game::CreateBasicGeometry()
 	abominationEyeball = new Mesh("../Assets/Models/abomination1/eyeball.obj", device);
 	abomincationTentacle = new Mesh("../Assets/Models/abomination1/tentacle.obj", device);
 
-	//gameEntities.push_back(new GameEntity(m1, mat1));
-	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m2, mat1));
-	//gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m3, mat1));
-	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
-
 	//1 body
 	gameEntities.push_back(new GameEntity(abominationBody, mat1));
-	gameEntities[0]->Translate(XMFLOAT3(5.0f, 5.0f, 1.0f));
 	//3 eyes
 	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
 	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
@@ -347,7 +340,7 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 	pointX = pointX / cam->GetProjectionMatrix()._11;
 	pointY = pointY / cam->GetProjectionMatrix()._22;
 
-	viewMatrix = XMLoadFloat4x4(&(cam->GetViewMatrix()));
+	/*viewMatrix = XMLoadFloat4x4(&(cam->GetViewMatrix()));
 	inverseViewMatrix = XMMatrixInverse(nullptr, viewMatrix);
 	XMStoreFloat4x4(&inverseViewMatrixF, inverseViewMatrix);
 
@@ -363,26 +356,33 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 
 	XMVECTOR rayDirectionObject = XMVector3TransformNormal(rayDirectionView, entityInverseWorldMatrix);
 	rayDirectionObject = XMVector4Normalize(rayDirectionView);
-	XMVECTOR rayOriginObject = XMVector3TransformCoord(rayOriginView, entityInverseWorldMatrix);
+	XMVECTOR rayOriginObject = XMVector3TransformCoord(rayOriginView, entityInverseWorldMatrix);*/
 
-	XMVECTOR ray1 = XMVector3Unproject(XMVectorSet(pMouseX, pMouseY, 0.0, 1.0), 0, 0, width, height, 0, 1, XMLoadFloat4x4(&(cam->GetProjectionMatrix())), XMLoadFloat4x4(&(cam->GetViewMatrix())), XMLoadFloat4x4(&(gameEntities[0]->GetWorldMatrix())));
-	XMVECTOR ray2 = XMVector3Unproject(XMVectorSet(pMouseX, pMouseY, 1.0, 1.0), 0, 0, width, height, 0, 1, XMLoadFloat4x4(&(cam->GetProjectionMatrix())), XMLoadFloat4x4(&(cam->GetViewMatrix())), XMLoadFloat4x4(&(gameEntities[0]->GetWorldMatrix())));
+	//Unproject method
+	XMVECTOR ray1 = XMVector3Unproject(XMVectorSet((float)pMouseX, (float)pMouseY, 0.0, 1.0), 0, 0, width, height, 0, 1, XMLoadFloat4x4(&(cam->GetProjectionMatrix())), XMLoadFloat4x4(&(cam->GetViewMatrix())), XMLoadFloat4x4(&worldMatrix));
+	XMVECTOR ray2 = XMVector3Unproject(XMVectorSet((float)pMouseX, (float)pMouseY, 1.0, 1.0), 0, 0, width, height, 0, 1, XMLoadFloat4x4(&(cam->GetProjectionMatrix())), XMLoadFloat4x4(&(cam->GetViewMatrix())), XMLoadFloat4x4(&worldMatrix));
 	XMVECTOR ray3 = XMVector4Normalize(XMVectorSubtract(ray2, ray1));
 
-	/*
-	XMStoreFloat4x4(&inverseEntityMatrix, entityInverseWorldMatrix);
-	XMVECTOR origin = XMLoadFloat3(&(cam->GetPosition()));
+	XMVECTOR camPos = XMLoadFloat3(&(cam->GetPosition()));
 
-	XMVECTOR rayOrigin = XMVector3TransformCoord(XMLoadFloat3(&(cam->GetPosition())), XMLoadFloat4x4(&entityMatrix));
-	XMVECTOR rayDirection = XMVector3TransformNormal(XMLoadFloat3(&direction), XMLoadFloat4x4(&inverseEntityMatrix));
-	rayDirection = XMVector3Normalize(rayDirection);*/
-	XMFLOAT3 rayDirectionF; //this is facing in the right direction! Hooray!
-	XMStoreFloat3(&rayDirectionF, ray3);
-	XMFLOAT3 rayOriginF; //position is half of what the actual camera position is...so *shrugs* worth a shot
-	XMStoreFloat3(&rayOriginF, ray1);
-	gameEntities[0]->TestPick(rayOriginF, rayDirectionF);//put in camera position instead of calculated one for like approximation
-	std::cout << rayOriginF.x << " "  << rayOriginF.y << " " << rayOriginF.z << "\n";
+	//chris's method
+	XMVECTOR rayVS = XMVectorSet(pointX * -1, pointY * -1, 1, 0);
+	viewMatrix = XMLoadFloat4x4(&(cam->GetViewMatrix()));
+	inverseViewMatrix = XMMatrixInverse(nullptr, viewMatrix);
+	XMVECTOR rayWS = XMVector3TransformNormal(rayVS, inverseViewMatrix);
+	rayWS = XMVector3Normalize(rayWS);
+
+	XMFLOAT3 rayDirectionF;
+	XMStoreFloat3(&rayDirectionF, rayWS);
+	rayDirectionF.x *= -1;
+	rayDirectionF.y *= -1;
+	XMFLOAT3 rayOriginF; 
+	XMStoreFloat3(&rayOriginF, XMVectorAdd(ray1, camPos));
+
+	gameEntities[0]->TestPick(rayOriginF, rayDirectionF);
+
+	//std::cout << rayOriginF.x << " "  << rayOriginF.y << " " << rayOriginF.z << "\n";
 	//std::cout << cam->GetPosition().x << " " << cam->GetPosition().y <<" " << cam->GetPosition().z << "\n";
-	//std::cout << rayDirectionF.x<< " " << rayDirectionF.y << " " << rayDirectionF.z << "\n";
+	std::cout << rayDirectionF.x<< " " << rayDirectionF.y << " " << rayDirectionF.z << "\n";
 }
 #pragma endregion

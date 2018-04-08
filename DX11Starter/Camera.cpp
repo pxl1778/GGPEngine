@@ -86,6 +86,12 @@ void Camera::UpdateLookAt(float deltaTime, XMFLOAT3 pTargetLookAt) {
 	//XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
 	XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&pTargetLookAt), XMVector3Normalize(upVector));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(newView));
+
+
+	XMMATRIX tr = XMMatrixTranslation(position.x, position.y, position.z);
+	//XMMATRIX ro = XMMatrixRotationRollPitchYaw(rotationX, rotationY, rotation.z);
+
+	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(tr));
 }
 
 void Camera::UpdateProjectionMatrix(unsigned pWidth, unsigned pHeight) {
@@ -137,6 +143,10 @@ XMFLOAT4X4 Camera::GetViewMatrix() {
 
 XMFLOAT4X4 Camera::GetProjectionMatrix() {
 	return projectionMatrix;
+}
+
+XMFLOAT4X4 Camera::GetWorldMatrix() {
+	return worldMatrix;
 }
 
 XMFLOAT3 Camera::GetPosition() {

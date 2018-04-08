@@ -15,6 +15,8 @@ public:
 	~Mesh();
 	DirectX::XMFLOAT3 getMinSize();
 	DirectX::XMFLOAT3 getMaxSize();
+	DirectX::XMFLOAT3 getExtents();
+	DirectX::XMFLOAT3 getCenter();
 
 	ID3D11Buffer* GetVertexBuffer();
 	ID3D11Buffer* GetIndexBuffer();
@@ -28,5 +30,7 @@ private:
 	int indicesCount;
 	DirectX::XMFLOAT3 minSize;
 	DirectX::XMFLOAT3 maxSize;
+	DirectX::XMFLOAT3 extents;
+	DirectX::XMFLOAT3 center;
 };
 

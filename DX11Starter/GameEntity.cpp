@@ -10,7 +10,9 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
 	position = XMFLOAT3(0, 0, 0);
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
-	box = BoundingBox({ pMeshPointer->getMaxSize(), pMeshPointer->getMinSize() });
+	box = new BoundingBox();
+	box->Center = position;
+	box->Extents = meshPointer->getExtents();
 }
 
 
@@ -44,39 +46,22 @@ XMFLOAT3 GameEntity::GetScale() {
 }
 
 void GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
-	//https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms
-	//https://www.youtube.com/watch?v=4h-jlOBsndU&t=1039s
-	float txMin = (box.min.x - pOrigin.x) / pDirection.x;
-	float txMax = (box.max.x - pOrigin.x) / pDirection.x;
-	if (txMax < txMin) {
-		float temp = txMax;
-		txMax = txMin;
-		txMin = temp;
+	//recalculate bounding box center and extents whenver it changes
+	XMStoreFloat3(&(box->Extents), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getExtents())), XMLoadFloat3(&scale)));
+	XMStoreFloat3(&(box->Center), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getCenter())), XMLoadFloat3(&scale)));
+	XMStoreFloat3(&(box->Center), XMVectorAdd(XMLoadFloat3(&(box->Center)), XMLoadFloat3(&position)));
+	
+	float dist;
+	bool win = box->Intersects(XMLoadFloat3(&pOrigin), XMLoadFloat3(&pDirection), dist);
+	//std::cout << box->Center.x << " " << box->Center.y << " " << box->Center.z << " " << "\n";
+	if (win) {
+		std::cout << "yay";
+		//now do triangle hits
 	}
-	float tyMin = (box.min.y - pOrigin.y) / pDirection.y;
-	float tyMax = (box.max.y - pOrigin.y) / pDirection.y;
-	if (tyMax < tyMin) {
-		float temp = tyMax;
-		tyMax = tyMin;
-		tyMin = temp;
+	else {
+
+		std::cout << "nay";
 	}
-	float tzMin = (box.min.z - pOrigin.z) / pDirection.z;
-	float tzMax = (box.max.z - pOrigin.z) / pDirection.z;
-	if (tzMax < tzMin) {
-		float temp = tzMax;
-		tzMax = tzMin;
-		tzMin = temp;
-	}
-
-	float tMin = (txMin > tyMin) ? txMin : tyMin;
-	float tMax = (txMax < tyMax) ? txMax : tyMax;
-
-	if (txMin > tyMax || tyMin > txMax) { std::cout << "wrong\n"; return; }
-	if (tMin > tzMax || tzMin > tMax) { std::cout << "wrong\n"; return; }
-	if (tzMin > tMin) { tMin = tzMin; }
-	if (tzMax < tMax) { tMax = tzMax; }
-
-	std::cout << "hit\n";
 }
 
 void GameEntity::SetWorldMatrix(XMFLOAT4X4 pWorldMatrix) {
@@ -99,10 +84,10 @@ void GameEntity::SetScale(XMFLOAT3 pScale) {
 void GameEntity::Translate(XMFLOAT3 pTranslate) {
 	XMVECTOR newPosition = XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&pTranslate));
 	XMStoreFloat3(&position, newPosition);
-	XMVECTOR newMax = XMVectorAdd(XMLoadFloat3(&box.max), XMLoadFloat3(&pTranslate));
+	/*XMVECTOR newMax = XMVectorAdd(XMLoadFloat3(&box.max), XMLoadFloat3(&pTranslate));
 	XMStoreFloat3(&box.max, newMax);
 	XMVECTOR newMin = XMVectorAdd(XMLoadFloat3(&box.min), XMLoadFloat3(&pTranslate));
-	XMStoreFloat3(&box.min, newMin);
+	XMStoreFloat3(&box.min, newMin);*/
 }
 
 //Adds the given XMFLOAT3 to the current rotation
@@ -115,10 +100,6 @@ void GameEntity::Rotate(XMFLOAT3 pRotate) {
 void GameEntity::Scale(XMFLOAT3 pScale) {
 	XMVECTOR newScale = XMVectorMultiply(XMLoadFloat3(&this->scale), XMLoadFloat3(&pScale));
 	XMStoreFloat3(&this->scale, newScale);
-	XMVECTOR newMax = XMVectorMultiply(XMLoadFloat3(&box.max), XMLoadFloat3(&pScale));
-	XMStoreFloat3(&box.max, newMax);
-	XMVECTOR newMin = XMVectorMultiply(XMLoadFloat3(&box.min), XMLoadFloat3(&pScale));
-	XMStoreFloat3(&box.min, newMin);
 }
 
 //Calculates the world matrix for this game entity

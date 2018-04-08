@@ -9,6 +9,7 @@ public:
 
 	DirectX::XMFLOAT4X4 GetViewMatrix();
 	DirectX::XMFLOAT4X4 GetProjectionMatrix();
+	DirectX::XMFLOAT4X4 GetWorldMatrix();
 
 	void Update(float deltaTime);
 	void UpdateLookAt(float deltaTime, DirectX::XMFLOAT3 pTargetPos);
@@ -22,6 +23,7 @@ public:
 private:
 	DirectX::XMFLOAT4X4 viewMatrix;
 	DirectX::XMFLOAT4X4 projectionMatrix;
+	DirectX::XMFLOAT4X4 worldMatrix;
 
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 direction;

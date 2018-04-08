@@ -3,7 +3,7 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Camera.h"
-#include "BoundingBox.h"
+#include "DirectXCollision.h"
 class GameEntity
 {
 public:
@@ -39,6 +39,6 @@ private:
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 rotation;
 	DirectX::XMFLOAT3 scale;
-	BoundingBox box;
+	DirectX::BoundingBox* box;
 };
 
