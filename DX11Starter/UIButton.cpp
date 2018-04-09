@@ -2,7 +2,7 @@
 
 using namespace DirectX;
 
-UIButton::UIButton(UIVertex* vertArray, int vertCount, int* indices, int indicesCount, ID3D11Device* device)
+UIButton::UIButton(UIVertex* vertArray, int vertCount, int* indices, int indicesCount, ID3D11Device* device, int x, int y, int w, int h)
 {
 	// initialize vertex buffer and index buffer pointers to ensure there is no 'junk' data
 	vertexBuffer = 0;
@@ -38,6 +38,12 @@ UIButton::UIButton(UIVertex* vertArray, int vertCount, int* indices, int indices
 
 	vertexShader = 0;
 	pixelShader = 0;
+
+	// set button's position
+	this->x = x;
+	this->y = y;
+	this->width = w;
+	this->height = h;
 }
 
 
