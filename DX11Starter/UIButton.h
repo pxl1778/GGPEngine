@@ -10,7 +10,7 @@
 class UIButton
 {
 public:
-	UIButton(UIVertex* vertArray, int vertCount, int* indices, int indicesCount, ID3D11Device* device);
+	UIButton(UIVertex* vertArray, int vertCount, int* indices, int indicesCount, ID3D11Device* device, int x, int y, int w, int h);
 	~UIButton();
 
 	void LoadShaders(ID3D11Device* device, ID3D11DeviceContext* context, std::string VS_FileName, std::string PS_FileName);
@@ -23,6 +23,12 @@ public:
 	SimplePixelShader* GetPixelShader();
 
 	int GetIndexCount();
+
+	// Button Rect properties
+	int x;
+	int y;
+	int width;
+	int height;
 private:
 	ID3D11Buffer* vertexBuffer;
 	ID3D11Buffer* indexBuffer;

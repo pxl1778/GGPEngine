@@ -233,7 +233,7 @@ void Game::CreateUIButtons()
 
 	int indices[] = { 0, 1, 2, 3, 4, 5 };
 
-	feedButton = new UIButton(vertices1, 6, indices, 6, device);
+	feedButton = new UIButton(vertices1, 6, indices, 6, device, 31, 99, 118, 186);
 }
 
 // --------------------------------------------------------
@@ -256,6 +256,10 @@ void Game::Update(float deltaTime, float totalTime)
 	// Quit if the escape key is pressed
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
+
+	if (GetAsyncKeyState('P') & 0x8000) {
+		gs = PAUSE_MENU;
+	}
 
 	guy->Update(deltaTime, totalTime);
 
@@ -359,14 +363,40 @@ void Game::Draw(float deltaTime, float totalTime)
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
-	//if (prevMousePos.x > 0.5 && prevMousePos.y > 0.5) {
-	//	printf("%d \n", prevMousePos.y);
-	//}
+	printf("x: %d", x);
+	printf(", y: %d\n", y);
 
 	// RED FLAG: Hard-coded values atm - YIKES!
-	if (x >= 31 && x <= 118 && y >= 99 && y <= 186) {
-		guy->isFeeding = true;
-		printf("\nYou fed the thing");
+	switch (gs) {
+		case START_MENU:
+			if (x >= button1->x && x <= button1->width && y >= button1->y && y <= button1->height) {
+				gs = IN_GAME;
+				printf("\nStarting game");
+			}
+
+			if (x >= button2->x && x <= button2->width && y >= button2->y && y <= button2->height) {
+				Quit();
+			}
+			break;
+		case IN_GAME:
+			if(x >= feedButton->x && x <= feedButton->width && y >= feedButton->y && y <= feedButton->height) {
+				guy->isFeeding = true;
+				printf("\nYou fed the thing");
+			}
+			break;
+		case PAUSE_MENU:
+			if (x >= button2->x && x <= button2->width && y >= button2->y && y <= button2->height) {
+				gs = IN_GAME;
+				printf("\nResuming game");
+			}
+			break;
+		case GAME_OVER:
+			if (x >= button3->x && x <= button3->width && y >= button3->y && y <= button3->height) {
+				gs = START_MENU;
+				printf("\nReturning to Start Menu");
+				// don't forget to reset in-game properties here or when transitioning to in-game from start menu
+			}
+			break;
 	}
 
 	// Save the previous mouse position, so we have it for the future
