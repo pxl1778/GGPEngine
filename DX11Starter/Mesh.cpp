@@ -222,6 +222,10 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 
 	//printf("%d \n", vertCounter);
 	CalculateTangents(&verts[0], vertCounter, &indices[0], vertCounter);
+	vertices = new Vertex[vertCounter]();
+	memcpy(vertices, &verts[0], sizeof(Vertex) * vertCounter);
+	indicesPointer = new unsigned int[vertCounter]();
+	memcpy(indicesPointer, &indices[0], sizeof(int) * vertCounter);
 
 	// Create the VERTEX BUFFER description -----------------------------------
 	// - The description is created on the stack because we only need
@@ -342,6 +346,25 @@ Mesh::~Mesh()
 	//Gotta release those DX11 things!
 	if (vertexBuffer) { vertexBuffer->Release(); }
 	if (indexBuffer) { indexBuffer->Release(); }
+}
+
+bool Mesh::TestPick(XMVECTOR pOrigin, XMVECTOR pDirection) {
+	pDirection = XMVector3Normalize(pDirection);
+	float dist = 0;
+	for (int i = 0; i < indicesCount;)
+	{
+		unsigned int i1 = indicesPointer[i++];
+		unsigned int i2 = indicesPointer[i++];
+		unsigned int i3 = indicesPointer[i++];
+		XMVECTOR v1 = DirectX::XMLoadFloat3(&vertices[i1].Position);
+		XMVECTOR v2 = DirectX::XMLoadFloat3(&vertices[i2].Position);
+		XMVECTOR v3 = DirectX::XMLoadFloat3(&vertices[i3].Position); 
+		if (TriangleTests::Intersects(pOrigin, pDirection, v1, v2, v3, dist)) {
+			return true;
+		}
+	}
+	return false;
+
 }
 
 XMFLOAT3 Mesh::getMinSize() {

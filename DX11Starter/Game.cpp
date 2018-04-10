@@ -212,17 +212,17 @@ void Game::Update(float deltaTime, float totalTime)
 	float multiplier = .001f;
 	float offset = .1f;
 
-	////body hover
-	//gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
-	////eyball hover
-	//gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
-	//for (int i = 2; i <= 3; i++) {
-	//	gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
-	//}
-	////tentacle hover
-	//for (int i = 4; i <= 11; i++) {
-	//	gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
-	//}
+	//body hover
+	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
+	//eyball hover
+	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
+	for (int i = 2; i <= 3; i++) {
+		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
+	}
+	//tentacle hover
+	for (int i = 4; i <= 11; i++) {
+		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
+	}
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
@@ -310,6 +310,7 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 	if (buttonState & 0x0001)
 	{
 		cam->UpdateRotation((x - (float)prevMousePos.x) * 0.005f, (y - (float)prevMousePos.y) * 0.005f);
+		TestInteraction(x, y);
 	}
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
@@ -331,8 +332,8 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 	//https://code.msdn.microsoft.com/windowsapps/How-to-pick-and-manipulate-089639ab/sourcecode?fileId=124643&pathId=1248898311
 	float pointX, pointY;
 	XMMATRIX inverseViewMatrix, viewMatrix;
-	XMFLOAT4X4 inverseViewMatrixF, inverseEntityMatrix;
-	XMFLOAT3 direction;
+	/*XMFLOAT4X4 inverseViewMatrixF, inverseEntityMatrix;
+	XMFLOAT3 direction;*/
 
 	pointX = ((2.0f * (float)pMouseX) / (float)width) - 1.0f;
 	pointY = (((2.0f * (float)pMouseY) / (float)height) - 1.0f) * -1.0f;

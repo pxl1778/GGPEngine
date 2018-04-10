@@ -56,7 +56,22 @@ void GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
 	//std::cout << box->Center.x << " " << box->Center.y << " " << box->Center.z << " " << "\n";
 	if (win) {
 		std::cout << "yay";
+		XMMATRIX inverseWorldMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&worldMatrix));
+		XMFLOAT4X4 iwm;
+		XMStoreFloat4x4(&iwm, inverseWorldMatrix);
+		XMVECTOR inverseNormal = XMVector3TransformNormal(XMLoadFloat3(&pDirection), inverseWorldMatrix);
+		XMFLOAT3 in;
+		XMStoreFloat3(&in, inverseNormal);
+		XMVECTOR inverseOrigin = XMVector3TransformNormal(XMLoadFloat3(&pOrigin), inverseWorldMatrix);
+		XMFLOAT3 io;
+		XMStoreFloat3(&io, inverseOrigin);
 		//now do triangle hits
+		if (meshPointer->TestPick(XMVector3Transform(XMLoadFloat3(&pOrigin), inverseWorldMatrix), XMVector3TransformNormal(XMLoadFloat3(&pDirection), inverseWorldMatrix))) {
+			std::cout << "yay";
+		}
+		else {
+			std::cout << "crap";
+		}
 	}
 	else {
 
@@ -84,10 +99,6 @@ void GameEntity::SetScale(XMFLOAT3 pScale) {
 void GameEntity::Translate(XMFLOAT3 pTranslate) {
 	XMVECTOR newPosition = XMVectorAdd(XMLoadFloat3(&position), XMLoadFloat3(&pTranslate));
 	XMStoreFloat3(&position, newPosition);
-	/*XMVECTOR newMax = XMVectorAdd(XMLoadFloat3(&box.max), XMLoadFloat3(&pTranslate));
-	XMStoreFloat3(&box.max, newMax);
-	XMVECTOR newMin = XMVectorAdd(XMLoadFloat3(&box.min), XMLoadFloat3(&pTranslate));
-	XMStoreFloat3(&box.min, newMin);*/
 }
 
 //Adds the given XMFLOAT3 to the current rotation
