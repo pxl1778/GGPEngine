@@ -10,6 +10,7 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
 	position = XMFLOAT3(0, 0, 0);
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
+	forward = XMFLOAT3(0, 0, -1);
 }
 
 
@@ -24,6 +25,10 @@ Mesh* GameEntity::GetMesh() {
 
 Material* GameEntity::GetMaterial() {
 	return material;
+}
+
+void GameEntity::SetMaterial(Material* mat) {
+	this->material = mat;
 }
 
 XMFLOAT4X4 GameEntity::GetWorldMatrix() {
@@ -52,6 +57,8 @@ void GameEntity::SetPosition(XMFLOAT3 pPosition) {
 
 void GameEntity::SetRotation(XMFLOAT3 pRotation) {
 	rotation = pRotation;
+
+	
 }
 
 void GameEntity::SetScale(XMFLOAT3 pScale) {
@@ -66,14 +73,33 @@ void GameEntity::Translate(XMFLOAT3 pTranslate) {
 
 //Adds the given XMFLOAT3 to the current rotation
 void GameEntity::Rotate(XMFLOAT3 pRotate) {
+
 	XMVECTOR newRotation = XMVectorAdd(XMLoadFloat3(&rotation), XMLoadFloat3(&pRotate));
 	XMStoreFloat3(&rotation, newRotation);
+
+	//rotation values now wrap
+	/*if (rotation.x > XM_2PI) rotation.x -= XM_2PI;
+	if (rotation.y > XM_2PI) rotation.y -= XM_2PI;
+
+	if (rotation.x < 0) rotation.x += XM_2PI;
+	if (rotation.y < 0) rotation.y += XM_2PI;*/
 }
 
 //Multiplies the given XMFLOAT3 to the current scale
 void GameEntity::Scale(XMFLOAT3 pScale) {
 	XMVECTOR newScale = XMVectorMultiply(XMLoadFloat3(&this->scale), XMLoadFloat3(&pScale));
 	XMStoreFloat3(&this->scale, newScale);
+}
+
+void GameEntity::MoveForward(float pForward)
+{
+	XMVECTOR rotationVector = XMQuaternionRotationRollPitchYaw(0, rotation.y, 0);
+	XMVECTOR newForward = XMVector3Rotate(XMLoadFloat3(&forward), rotationVector);
+	newForward = XMVector3Normalize(newForward);
+	newForward *= pForward;
+	XMFLOAT3 translateAmount;
+	XMStoreFloat3(&translateAmount, newForward);
+	Translate(translateAmount);
 }
 
 //Calculates the world matrix for this game entity

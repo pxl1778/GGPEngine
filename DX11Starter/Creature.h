@@ -28,7 +28,9 @@ public:
 private:
 
 	//texture stuff
-	ID3D11ShaderResourceView * eyeTxt;
+	ID3D11ShaderResourceView* eyeTxt_neutral;
+	ID3D11ShaderResourceView* eyeTxt_angry;
+	ID3D11ShaderResourceView* eyeTxt_closed;
 	ID3D11ShaderResourceView* bodyTxt;
 	ID3D11ShaderResourceView* tentacleTxt;
 	ID3D11ShaderResourceView* blankNormal;
@@ -41,7 +43,9 @@ private:
 	//materials
 	Material* tentacleMat;
 	Material* bodyMat;
-	Material* eyeMat;
+	Material* eyeMat_neutral;
+	Material* eyeMat_angry;
+	Material* eyeMat_closed;
 
 	//Lights
 	DirectionalLight dLight1;

@@ -11,6 +11,7 @@ public:
 
 	Mesh* GetMesh();
 	Material* GetMaterial();
+	void SetMaterial(Material* mat);
 	DirectX::XMFLOAT4X4 GetWorldMatrix();
 	DirectX::XMFLOAT3 GetPosition();
 	DirectX::XMFLOAT3 GetRotation();
@@ -24,6 +25,7 @@ public:
 	void Translate(DirectX::XMFLOAT3 pTranslate);
 	void Rotate(DirectX::XMFLOAT3 pRotate);
 	void Scale(DirectX::XMFLOAT3 pScale);
+	void MoveForward(float pForward);
 
 	void CalculateWorldMatrix();
 	void Draw(ID3D11DeviceContext* pContext, Camera* pCam);
@@ -35,5 +37,6 @@ private:
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 rotation;
 	DirectX::XMFLOAT3 scale;
+	DirectX::XMFLOAT3 forward;
 };
 
