@@ -8,6 +8,8 @@
     <FxCompile Include="UI_PS.hlsl" />
     <FxCompile Include="UI_VS.hlsl" />
     <FxCompile Include="ToonPixelShader.hlsl" />
+    <FxCompile Include="BlurPixelShader.hlsl" />
+    <FxCompile Include="BlurVertexShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
