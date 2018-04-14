@@ -7,6 +7,7 @@
     <FxCompile Include="VertexShader.hlsl" />
     <FxCompile Include="UI_PS.hlsl" />
     <FxCompile Include="UI_VS.hlsl" />
+    <FxCompile Include="ToonPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />

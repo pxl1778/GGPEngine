@@ -62,11 +62,6 @@ DXCore::DXCore(
 	// Initialize game state to start menu
 	gs = START_MENU;
 
-	// Create UIButtons
-	//CreateUIButtons();
-	// Load UIButton Shaders
-	//button1->LoadShaders(device, context, "Oh wait", "I'm trolling");
-
 	// Query performance counter for accurate timing information
 	__int64 perfFreq;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&perfFreq);
@@ -89,7 +84,9 @@ DXCore::~DXCore()
 	m_font.reset();
 	m_spriteBatch.reset();
 
-	//delete button1;
+	delete button1;
+	delete button2;
+	delete button3;
 }
 
 // --------------------------------------------------------
@@ -281,12 +278,29 @@ HRESULT DXCore::InitDirectX()
 
 	m_font = std::make_unique<DirectX::SpriteFont>(device, L"../SpriteFont/myfile.spritefont");
 	m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(context);
+
+	m_fontPos_title.x = 1280 / 2.f;
+	m_fontPos_title.y = 180.f;
 	
 	m_fontPos.x = 1280 / 2.f;
 	m_fontPos.y = 720 / 2.f;
 	
 	m_fontPos2.x = 1280 / 2.f;
 	m_fontPos2.y = 720 / 2.f + 100;
+
+	// Create UIButtons
+	CreateUIButtons();
+	// Load UIButton Shaders
+	button1->LoadShaders(device, context, "Oh wait", "I'm trolling");
+	button2->LoadShaders(device, context, "Oh wait", "I'm trolling");
+	button3->LoadShaders(device, context, "Oh wait", "I'm trolling");
+
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		0.25f * 3.1415926535f,		// Field of View Angle
+		(float)1280 / 720,		// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
 
 	// Return the "everything is ok" HRESULT value
 	return S_OK;
@@ -414,8 +428,25 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
+					// Draw UIButtons
+					button1->Draw(context, projectionMatrix);
+					button2->Draw(context, projectionMatrix);
+
 					// Display some text for Start Menu game state
 					m_spriteBatch->Begin();
+					const wchar_t* title_output = L"Untitled Game";
+					DirectX::SimpleMath::Vector2 title_origin = m_font->MeasureString(title_output);
+					title_origin.x = title_origin.x / 2;
+					title_origin.y = title_origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						title_output,
+						m_fontPos_title,
+						DirectX::Colors::White,
+						0.f,
+						title_origin);
+
 					const wchar_t* output = L"Start";
 					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
 					origin.x = origin.x / 2;
@@ -463,25 +494,7 @@ HRESULT DXCore::Run()
 						0);
 
 					// Draw UIButtons
-					//UINT UIstride = sizeof(UIVertex);
-					//UINT offset = 0;
-					//
-					//ID3D11Buffer* button1VB = button1->GetVertexBuffer();
-					//ID3D11Buffer* button1IB = button1->GetIndexBuffer();
-					//
-					//context->IASetVertexBuffers(0, 1, &button1VB, &UIstride, &offset);
-					//context->IASetIndexBuffer(button1IB, DXGI_FORMAT_R32_UINT, 0);
-					//
-					////button1->GetVertexShader()->SetMatrix4x4("projection", );
-					//
-					//button1->GetVertexShader()->CopyAllBufferData();
-					//
-					//button1->GetVertexShader()->SetShader();
-					//button1->GetPixelShader()->SetShader();
-					//
-					//context->DrawIndexed(button1->GetIndexCount(), // The number of indices to use (we could draw a subset if we wanted)
-					//	0,     // Offset to the first index we want to use
-					//	0);    // Offset to add to each index when looking up vertices
+					button2->Draw(context, projectionMatrix);
 					
 					// Display some text for Pause Menu game state
 					m_spriteBatch->Begin();
@@ -524,6 +537,9 @@ HRESULT DXCore::Run()
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					// Draw UIButtons
+					button3->Draw(context, projectionMatrix);
 
 					// Display text for GAME OVER game state
 					m_spriteBatch->Begin();
@@ -580,17 +596,39 @@ void DXCore::Quit()
 void DXCore::CreateUIButtons()
 {
 	UIVertex vertices1[] = {
-		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
-		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
-		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
-		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
-		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
-		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(0.8f, 0.8f, 0.8f, 0) },
+		{ XMFLOAT3(-0.45f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
+		{ XMFLOAT3(-0.45f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+ 		{ XMFLOAT3(-0.45f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
+		{ XMFLOAT3(+0.5f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
 	};
 
 	int indices[] = { 0, 1, 2, 3, 4, 5 };
 
-	//button1 = new UIButton(vertices1, 6, indices, 6, device);
+	button1 = new UIButton(vertices1, 6, indices, 6, device, 562, 334, 727, 385);
+
+	UIVertex vertices2[] = {
+		{ XMFLOAT3(-0.45f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
+		{ XMFLOAT3(-0.45f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+		{ XMFLOAT3(-0.45f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
+		{ XMFLOAT3(+0.5f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+	};
+
+	button2 = new UIButton(vertices2, 6, indices, 6, device, 562, 434, 727, 485);
+
+	UIVertex vertices3[] = {
+		{ XMFLOAT3(-1.15f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
+		{ XMFLOAT3(-1.15f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+1.2f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+		{ XMFLOAT3(-1.15f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+1.2f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
+		{ XMFLOAT3(+1.2f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+	};
+
+	button3 = new UIButton(vertices3, 6, indices, 6, device, 439, 434, 848, 485);
 }
 
 // --------------------------------------------------------
