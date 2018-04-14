@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+<<<<<<< HEAD
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
@@ -12,6 +13,15 @@
     <Filter Include="Shaders">
       <UniqueIdentifier>{f9e8d06b-dd7b-438c-8366-5dabd553fb21}</UniqueIdentifier>
     </Filter>
+=======
+    <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="SkyBoxPixelShader.hlsl" />
+    <FxCompile Include="SkyBoxVertexShader.hlsl" />
+    <FxCompile Include="VertexShader.hlsl" />
+    <FxCompile Include="UI_PS.hlsl" />
+    <FxCompile Include="UI_VS.hlsl" />
+    <FxCompile Include="ToonPixelShader.hlsl" />
+>>>>>>> cd8c7e29cd3b1609bab0f13812038c34216a4cc2
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DXCore.cpp">
