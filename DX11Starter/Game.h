@@ -9,9 +9,7 @@
 #include <DirectXMath.h>
 #include "WICTextureLoader.h"
 #include <vector>
-
 #include "Creature.h"
-
 #include "UIButton.h"
 
 
@@ -46,9 +44,20 @@ private:
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;
 	SimpleVertexShader* SkyBoxVertexShader;
+
+	//Skybox Stuff
 	SimplePixelShader* pixelShader;
 	SimplePixelShader* SkyBoxPixelShader;
-	
+	ID3D11RasterizerState* skyBoxRastState;
+	ID3D11DepthStencilState* skyBoxDepthState;
+	ID3D11ShaderResourceView* skyBoxSRV;
+
+	//Post-Process stuff
+	ID3D11RenderTargetView* alphaPostRTV;		// Allows us to render to a texture
+	ID3D11ShaderResourceView* alphaPostSRV;	// Allows us to sample from the same texture
+	SimpleVertexShader* alphaPostVertexShader;
+	SimplePixelShader* alphaPostPixelShader;
+
 
 	// The matrices to go from model space to screen space
 	DirectX::XMFLOAT4X4 worldMatrix;
@@ -78,15 +87,11 @@ private:
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
 	ID3D11ShaderResourceView* wallNormal;
-	ID3D11ShaderResourceView* skyBoxSRV;
 	ID3D11SamplerState* sampler;
 
-
-	ID3D11RasterizerState* skyBoxRastState;
-	ID3D11DepthStencilState* skyBoxDepthState;
+	
 	//Entities
 	std::vector<GameEntity*> gameEntities;
-
 	//Camera
 	Camera* cam;
 
@@ -101,8 +106,5 @@ private:
 
 	// UI Button
 	UIButton* feedButton;
-
-
-
 };
 

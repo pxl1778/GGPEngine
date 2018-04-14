@@ -43,20 +43,20 @@ Game::~Game()
 {
 	// Delete our simple shader objects, which
 	// will clean up their own internal DirectX stuff
+
+
+
 	delete vertexShader;
 	delete pixelShader;
+	delete SkyBoxPixelShader;
+	delete SkyBoxVertexShader;
 
 	delete m1;
 	delete m2;
 	delete m3;
 	delete m4;
 	delete m5; 
-	delete m6;
-
-
-	
-	delete SkyBoxPixelShader;
-	delete SkyBoxVertexShader;
+	delete m6;	
 
 	delete mat1;
 	
@@ -72,13 +72,16 @@ Game::~Game()
 	wallNormal->Release();
 	skyBoxRastState->Release();
 	skyBoxDepthState->Release();
+
+	alphaPostRTV->Release();
+	alphaPostSRV->Release();	
+	delete alphaPostVertexShader;
+	delete alphaPostPixelShader;
+
 	
 
 	delete cam;
-
-
 	delete guy;
-
 	delete feedButton;
 
 }
@@ -95,14 +98,12 @@ void Game::Init()
 	CreateUIButtons();
 	LoadShaders();
 	CreateMatrices();
-	CreateBasicGeometry();
-	
-
-	
+	CreateBasicGeometry();	
 
 	// Create a sampler state that holds options for sampling
 	// The descriptions should always just be local variables	
 
+	//Set skybox features
 	D3D11_RASTERIZER_DESC rasterDesc = {};
 	rasterDesc.FillMode = D3D11_FILL_SOLID;
 	rasterDesc.CullMode = D3D11_CULL_FRONT;
@@ -113,6 +114,46 @@ void Game::Init()
 	depthScript.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthScript.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&depthScript, &skyBoxDepthState);
+
+	//set Post-process effects
+	//Alpha pass
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.ArraySize = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.MipLevels = 1;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	ID3D11Texture2D* ppTexture;
+	device->CreateTexture2D(&textureDesc, 0, &ppTexture);
+
+	// Create the Render Target View
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+	device->CreateRenderTargetView(ppTexture, &rtvDesc, &alphaPostRTV);
+
+	// Create the Shader Resource View
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = textureDesc.Format;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
+	device->CreateShaderResourceView(ppTexture, &srvDesc, &alphaPostSRV);
+
+	// We don't need the texture reference itself no mo'
+	ppTexture->Release();
+
+
 
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -142,9 +183,6 @@ void Game::LoadShaders()
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
 
-
-	
-
 	// Load the sky box from a DDS file
 	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
 
@@ -161,13 +199,18 @@ void Game::LoadShaders()
 	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+
+	//skybox loading
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
-
-	
-
 	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
 	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+
+	//Post Process Loading
+	alphaPostVertexShader = new SimpleVertexShader(device, context);
+	alphaPostPixelShader = new SimplePixelShader(device, context);
+	alphaPostVertexShader->LoadShaderFile(L"BlurVertexShader.cso");
+	alphaPostPixelShader->LoadShaderFile(L"BlurPixelShader.cso");
 
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
@@ -206,18 +249,6 @@ void Game::CreateBasicGeometry()
 	m4 = new Mesh("../Assets/Models/cube.obj", device);
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
-
-
-	
-
-	//gameEntities.push_back(new GameEntity(m1, mat1));
-	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m2, mat1));
-	//gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m3, mat1));
-	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
-
-	
 }
 
 void Game::CreateUIButtons()
@@ -263,15 +294,10 @@ void Game::Update(float deltaTime, float totalTime)
 
 	guy->Update(deltaTime, totalTime);
 
-
-
-	
-
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
 
-	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
 }
@@ -288,27 +314,19 @@ void Game::Draw(float deltaTime, float totalTime)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
 	context->ClearRenderTargetView(backBufferRTV, color);
+	context->ClearRenderTargetView(alphaPostRTV, color);
 	context->ClearDepthStencilView(
 		depthStencilView,
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
 
+	context->OMSetRenderTargets(1, &alphaPostRTV, depthStencilView);
+
 	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
-
-	/*for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
-		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
-		(*it)->Draw(context, cam);
-
-	}*/
-
+	
 	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
 	//guy->Draw(context, cam);
-
-	
 
 
 	// Render the sky (after all opaque geometry)
@@ -345,6 +363,33 @@ void Game::Draw(float deltaTime, float totalTime)
 	// At the end of the frame, reset render states
 	context->RSSetState(0);
 	context->OMSetDepthStencilState(0, 0);
+
+	//Switch to post Process mode
+	//First Pass
+
+	//set rendering to back buffer(so stuff actually draws)
+	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	//set shaders and associated resources
+	alphaPostVertexShader->SetShader();
+	alphaPostPixelShader->SetShader();
+	alphaPostPixelShader->SetShaderResourceView("Pixels", alphaPostSRV);
+	alphaPostPixelShader->SetSamplerState("Sampler", sampler);
+	alphaPostPixelShader->SetInt("blurAmount", 2);
+	alphaPostPixelShader->SetFloat("pixelWidth", 1.0 / width);
+	alphaPostPixelShader->SetFloat("pixelHeight", 1.0 / height);
+	alphaPostPixelShader->CopyAllBufferData();
+
+	// Unbind vert/index buffers
+	ID3D11Buffer* nothing = 0;
+	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw a triangle that will hopefully fill the screen
+	context->Draw(3, 0);
+
+	// Unbind this particular register
+	alphaPostPixelShader->SetShaderResourceView("Pixels", 0);
+
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
