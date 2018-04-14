@@ -114,11 +114,8 @@ void Creature::Update(float deltaTime, float totalTime)
 		isFeedingDuration += deltaTime;
 
 		// reset appropriate variables if we are done feeding
-<<<<<<< HEAD
-		if (isFeedingDuration > 6.24f) {
-=======
+
 		if (isFeedingDuration > 6.28f) {
->>>>>>> cd8c7e29cd3b1609bab0f13812038c34216a4cc2
 			isFeeding = false;
 			isFeedingDuration = 0;
 		}

@@ -1,11 +1,2 @@
-﻿  DXCore.cpp
-  Generating Code...
-  Compiling...
-  Main.cpp
-  Game.cpp
-  Generating Code...
-  Skipping... (no relevant changes detected)
-  Mesh.cpp
-  GameEntity.cpp
-  Camera.cpp
-  DX11Starter.vcxproj -> C:\Users\Jarvis\Documents\GGP\project\x64\Debug\DX11Starter.exe
+﻿  Game.cpp
+  DX11Starter.vcxproj -> C:\Users\Joel\Desktop\GGP with Cassaroli\Group Project\x64\Debug\DX11Starter.exe

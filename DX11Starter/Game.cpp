@@ -141,14 +141,7 @@ void Game::LoadShaders()
 	//Loading Textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
-<<<<<<< HEAD
 
-=======
-
-
-	
-
->>>>>>> 83841f87e233bd3764dd1a24a31797509ecc87c0
 	// Load the sky box from a DDS file
 	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
 
@@ -168,16 +161,12 @@ void Game::LoadShaders()
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
 
-<<<<<<< HEAD
-	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
-	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
-=======
-	
 
 	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
 	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
+	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
 
->>>>>>> 83841f87e233bd3764dd1a24a31797509ecc87c0
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 
@@ -216,17 +205,6 @@ void Game::CreateBasicGeometry()
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
-
-	
-
-	//gameEntities.push_back(new GameEntity(m1, mat1));
-	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m2, mat1));
-	//gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m3, mat1));
-	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
-
-	
 }
 
 void Game::CreateUIButtons()
@@ -305,18 +283,10 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
 
-	/*for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
-		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
-		(*it)->Draw(context, cam);
-
-	}*/
+	
 
 	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
-	//guy->Draw(context, cam);
-
+	
 	
 
 
