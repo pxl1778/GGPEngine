@@ -1,8 +1,9 @@
+
 cbuffer Data : register(b0)
 {
 	float pixelWidth;
 	float pixelHeight;
-	int blurAmount;
+	int blurAmount, Bleft, Bright, Bup, Bdown;
 }
 
 
@@ -28,22 +29,16 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	// Loop the requested number of times, both left and right
 	// or up and down
-	int maxValue = clamp(blurAmount, 0, 5);
-	int minValue = clamp(blurAmount, -5, 0);
-
-	for (int y = minValue; y <= maxValue; y++)
-	{	
-			int x = 0;
+	for (int y = Bdown; y <= Bup; y++)
+	{
+		for (int x = Bleft; x <= Bright; x++)
+		{
 			float2 uv = input.uv + float2(x * pixelWidth, y * pixelHeight);
 			totalColor += Pixels.Sample(Sampler, uv);
 
 			numSamples++;
-		
+		}
 	}
 
-	for (int x = minValue; x <= maxValue; x++)
-	{
-
-	}
 	return totalColor / numSamples;
 }

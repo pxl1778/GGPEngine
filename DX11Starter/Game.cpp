@@ -374,7 +374,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	alphaPostPixelShader->SetShader();
 	alphaPostPixelShader->SetShaderResourceView("Pixels", alphaPostSRV);
 	alphaPostPixelShader->SetSamplerState("Sampler", sampler);
-	alphaPostPixelShader->SetInt("blurAmount", 2);
+	alphaPostPixelShader->SetInt("Bleft", 2);
+	alphaPostPixelShader->SetInt("Bright", 4);
+	alphaPostPixelShader->SetInt("Bup", 2);
+	alphaPostPixelShader->SetInt("Bdown", -2);
+
 	alphaPostPixelShader->SetFloat("pixelWidth", 1.0 / width);
 	alphaPostPixelShader->SetFloat("pixelHeight", 1.0 / height);
 	alphaPostPixelShader->CopyAllBufferData();
