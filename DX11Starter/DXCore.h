@@ -4,10 +4,16 @@
 #include <d3d11.h>
 #include <string>
 #include "GameStates.h"
+#include "SpriteFont.h"
+#include "SimpleMath.h"
+#include <DirectXMath.h>
+#include "UIButton.h"
 
 // We can include the correct library files here
 // instead of in Visual Studio settings if we want
 #pragma comment(lib, "d3d11.lib")
+
+// Text Tutorial: https://github.com/Microsoft/DirectXTK/wiki/Drawing-text
 
 class DXCore
 {
@@ -70,6 +76,14 @@ protected:
 	ID3D11RenderTargetView* backBufferRTV;
 	ID3D11DepthStencilView* depthStencilView;
 
+	// Game state enum
+	GAME_STATES gs;
+
+	// UI Buttons
+	UIButton* button1; // Start Button
+	UIButton* button2; // Exit & Resume Buttons
+	UIButton* button3; // Return to Menu Button
+
 	// Helper function for allocating a console window
 	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
 
@@ -86,9 +100,18 @@ private:
 	int fpsFrameCount;
 	float fpsTimeElapsed;
 
-	// Game state enum
-	GAME_STATES gs;
-	
+	// Sprite Font
+	std::unique_ptr<DirectX::SpriteFont> m_font;
+	DirectX::SimpleMath::Vector2 m_fontPos_title;
+	DirectX::SimpleMath::Vector2 m_fontPos;
+	DirectX::SimpleMath::Vector2 m_fontPos2;
+	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
+
+	// projection Matrix for UI buttons
+	DirectX::XMFLOAT4X4 projectionMatrix;
+
+	void CreateUIButtons();
+
 	void UpdateTimer();			// Updates the timer for this frame
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
 };

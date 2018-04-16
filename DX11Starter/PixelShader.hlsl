@@ -16,6 +16,7 @@ struct VertexToPixel
 	float3 worldPos		: TEXCOORD1;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
+	float4 color		: COLOR;
 };
 
 struct DirectionalLight
@@ -34,8 +35,8 @@ struct PointLight
 
 cbuffer externalData : register(b0) {
 	DirectionalLight dLight1;
-	DirectionalLight dLight2;
-	PointLight pLight1;
+	//DirectionalLight dLight2;
+	//PointLight pLight1;
 	float3 CameraPosition;
 };
 
@@ -67,16 +68,17 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	//lights
 	float dNdotL1 = saturate(dot(input.normal, -dLight1.Direction));
-	float dNdotL2 = saturate(dot(input.normal, -dLight2.Direction));
+	//float dNdotL2 = saturate(dot(input.normal, -dLight2.Direction));
 
-	float3 dirToPLight1 = normalize(pLight1.Position - input.worldPos);
-	float pNdotL1 = saturate(dot(input.normal, dirToPLight1));
-	float pAttenuationL1 = 1.0f / (1.0f + pLight1.Attenuation * pow(length(pLight1.Position - input.worldPos), 2.0f));
-	float3 pReflectionL1 = reflect(-dirToPLight1, input.normal);
-	float specularityL1 = pow(saturate(dot(pReflectionL1, dirToCamera)), 64) * pAttenuationL1;
-	float4 finalColor = dLight1.AmbientColor + ((dLight1.DiffuseColor * dNdotL1)) + ((dLight2.DiffuseColor * dNdotL2)) + ((pLight1.DiffuseColor * pNdotL1) * pAttenuationL1) + (specularityL1);
+	//float3 dirToPLight1 = normalize(pLight1.Position - input.worldPos);
+	//float pNdotL1 = saturate(dot(input.normal, dirToPLight1));
+	//float pAttenuationL1 = 1.0f / (1.0f + pLight1.Attenuation * pow(length(pLight1.Position - input.worldPos), 2.0f));
+	//float3 pReflectionL1 = reflect(-dirToPLight1, input.normal);
+	//float specularityL1 = pow(saturate(dot(pReflectionL1, dirToCamera)), 64) * pAttenuationL1;
+	//float4 finalColor = dLight1.AmbientColor + ((dLight1.DiffuseColor * dNdotL1)) + ((dLight2.DiffuseColor * dNdotL2)) + ((pLight1.DiffuseColor * pNdotL1) * pAttenuationL1) + (specularityL1);
+	float4 finalColor = dLight1.AmbientColor + ((dLight1.DiffuseColor * dNdotL1));
 
 	//diffuse
 	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
-	return surfaceColor * finalColor;
+	return surfaceColor * finalColor * input.color;
 }

@@ -18,6 +18,9 @@ public:
 
 	DirectX::XMFLOAT3 GetPosition();
 	DirectX::XMFLOAT3 GetDirection();
+	DirectX::XMVECTOR GetUpVector(DirectX::XMFLOAT3 pTargetLookAt);
+	DirectX::XMVECTOR GetRightVector(DirectX::XMFLOAT3 pTargetLookAt);
+	DirectX::XMVECTOR GetForwardVector(DirectX::XMFLOAT3 pTargetLookAt);
 	float GetRotationX();
 	float GetRotationY();
 private:
@@ -29,5 +32,6 @@ private:
 	DirectX::XMFLOAT3 direction;
 	float rotationX;
 	float rotationY;
+	float rotationSpeed;
 };
 

@@ -3,6 +3,8 @@
 #include <WindowsX.h>
 #include <sstream>
 
+using namespace DirectX;
+
 // Define the static instance variable so our OS-level 
 // message handling function below can talk to our object
 DXCore* DXCore::DXCoreInstance = 0;
@@ -78,6 +80,13 @@ DXCore::~DXCore()
 	if (swapChain) { swapChain->Release();}
 	if (context) { context->Release();}
 	if (device) { device->Release();}
+
+	m_font.reset();
+	m_spriteBatch.reset();
+
+	delete button1;
+	delete button2;
+	delete button3;
 }
 
 // --------------------------------------------------------
@@ -267,6 +276,32 @@ HRESULT DXCore::InitDirectX()
 	viewport.MaxDepth	= 1.0f;
 	context->RSSetViewports(1, &viewport);
 
+	m_font = std::make_unique<DirectX::SpriteFont>(device, L"../SpriteFont/myfile.spritefont");
+	m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(context);
+
+	m_fontPos_title.x = 1280 / 2.f;
+	m_fontPos_title.y = 180.f;
+	
+	m_fontPos.x = 1280 / 2.f;
+	m_fontPos.y = 720 / 2.f;
+	
+	m_fontPos2.x = 1280 / 2.f;
+	m_fontPos2.y = 720 / 2.f + 100;
+
+	// Create UIButtons
+	CreateUIButtons();
+	// Load UIButton Shaders
+	button1->LoadShaders(device, context, "Oh wait", "I'm trolling");
+	button2->LoadShaders(device, context, "Oh wait", "I'm trolling");
+	button3->LoadShaders(device, context, "Oh wait", "I'm trolling");
+
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		0.25f * 3.1415926535f,		// Field of View Angle
+		(float)1280 / 720,		// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+
 	// Return the "everything is ok" HRESULT value
 	return S_OK;
 }
@@ -380,19 +415,65 @@ HRESULT DXCore::Run()
 			if (GetAsyncKeyState('2')) gs = IN_GAME;
 			if (GetAsyncKeyState('3')) gs = PAUSE_MENU;
 			if (GetAsyncKeyState('4')) gs = GAME_OVER;
-
+			
 			// Checks game state and executes proper game state code
 			switch (gs) {
 				case START_MENU: {
 					// Start menu logic here
 					const float color[4] = { 0.4f, 0.6f, 0.75f, 0.0f };
-
 					context->ClearRenderTargetView(backBufferRTV, color);
 					context->ClearDepthStencilView(
 						depthStencilView,
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					// Draw UIButtons
+					button1->Draw(context, projectionMatrix);
+					button2->Draw(context, projectionMatrix);
+
+					// Display some text for Start Menu game state
+					m_spriteBatch->Begin();
+					const wchar_t* title_output = L"Untitled Game";
+					DirectX::SimpleMath::Vector2 title_origin = m_font->MeasureString(title_output);
+					title_origin.x = title_origin.x / 2;
+					title_origin.y = title_origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						title_output,
+						m_fontPos_title,
+						DirectX::Colors::White,
+						0.f,
+						title_origin);
+
+					const wchar_t* output = L"Start";
+					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
+					origin.x = origin.x / 2;
+					origin.y = origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(), 
+						output,
+						m_fontPos, 
+						DirectX::Colors::White, 
+						0.f, 
+						origin);
+
+					const wchar_t* output2 = L"Exit";
+					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
+					origin2.x = origin2.x / 2;
+					origin2.y = origin2.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output2,
+						m_fontPos2,
+						DirectX::Colors::White,
+						0.f,
+						origin2);
+					m_spriteBatch->End();
+
 					swapChain->Present(0, 0);
 					break;
 				}
@@ -411,6 +492,39 @@ HRESULT DXCore::Run()
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					// Draw UIButtons
+					button2->Draw(context, projectionMatrix);
+					
+					// Display some text for Pause Menu game state
+					m_spriteBatch->Begin();
+					const wchar_t* output = L"Paused";
+					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
+					origin.x = origin.x / 2;
+					origin.y = origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output,
+						m_fontPos,
+						DirectX::Colors::White,
+						0.f,
+						origin);
+
+					const wchar_t* output2 = L"Resume";
+					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
+					origin2.x = origin2.x / 2;
+					origin2.y = origin2.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output2,
+						m_fontPos2,
+						DirectX::Colors::White,
+						0.f,
+						origin2);
+					m_spriteBatch->End();
+
 					swapChain->Present(0, 0);
 					break;
 				}
@@ -423,6 +537,39 @@ HRESULT DXCore::Run()
 						D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 						1.0f,
 						0);
+
+					// Draw UIButtons
+					button3->Draw(context, projectionMatrix);
+
+					// Display text for GAME OVER game state
+					m_spriteBatch->Begin();
+					const wchar_t* output = L"GAME OVER";
+					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
+					origin.x = origin.x / 2;
+					origin.y = origin.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output,
+						m_fontPos,
+						DirectX::Colors::White,
+						0.f,
+						origin);
+
+					const wchar_t* output2 = L"Return to Start";
+					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
+					origin2.x = origin2.x / 2;
+					origin2.y = origin2.y / 2;
+
+					m_font->DrawString(
+						m_spriteBatch.get(),
+						output2,
+						m_fontPos2,
+						DirectX::Colors::White,
+						0.f,
+						origin2);
+					m_spriteBatch->End();
+
 					swapChain->Present(0, 0);
 					break;
 				}
@@ -445,6 +592,44 @@ void DXCore::Quit()
 	PostMessage(this->hWnd, WM_CLOSE, NULL, NULL);
 }
 
+
+void DXCore::CreateUIButtons()
+{
+	UIVertex vertices1[] = {
+		{ XMFLOAT3(-0.45f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
+		{ XMFLOAT3(-0.45f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+ 		{ XMFLOAT3(-0.45f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
+		{ XMFLOAT3(+0.5f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+	};
+
+	int indices[] = { 0, 1, 2, 3, 4, 5 };
+
+	button1 = new UIButton(vertices1, 6, indices, 6, device, 562, 334, 727, 385);
+
+	UIVertex vertices2[] = {
+		{ XMFLOAT3(-0.45f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
+		{ XMFLOAT3(-0.45f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+		{ XMFLOAT3(-0.45f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+0.5f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
+		{ XMFLOAT3(+0.5f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+	};
+
+	button2 = new UIButton(vertices2, 6, indices, 6, device, 562, 434, 727, 485);
+
+	UIVertex vertices3[] = {
+		{ XMFLOAT3(-1.15f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
+		{ XMFLOAT3(-1.15f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+1.2f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+		{ XMFLOAT3(-1.15f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
+		{ XMFLOAT3(+1.2f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
+		{ XMFLOAT3(+1.2f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
+	};
+
+	button3 = new UIButton(vertices3, 6, indices, 6, device, 439, 434, 848, 485);
+}
 
 // --------------------------------------------------------
 // Uses high resolution time stamps to get very accurate

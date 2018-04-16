@@ -1,7 +1,8 @@
 #include "Game.h"
 #include "Vertex.h"
 #include "DirectXCollision.h"
-
+#include "WICTextureLoader.h"
+#include "DDSTextureLoader.h"
 // For the DirectX Math library
 using namespace DirectX;
 
@@ -52,12 +53,13 @@ Game::~Game()
 	delete m4;
 	delete m5; 
 	delete m6;
-
-	delete abominationBody;
-	delete abominationEyeball;
-	delete abomincationTentacle;
+	
+	delete SkyBoxPixelShader;
+	delete SkyBoxVertexShader;
 
 	delete mat1;
+	delete debugMat;
+	
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
@@ -65,9 +67,36 @@ Game::~Game()
 	}
 	gameEntities.clear();
 
-	delete cam;
+	while (!debugCubes.empty()) {
+		delete debugCubes.back();
+		debugCubes.pop_back();
+	}
+	debugCubes.clear();
+
+	while (!rayEntities.empty()) {
+		delete rayEntities.back();
+		rayEntities.pop_back();
+	}
+	rayEntities.clear();
+
+	while (!rayMeshes.empty()) {
+		delete rayMeshes.back();
+		rayMeshes.pop_back();
+	}
+	rayMeshes.clear();
+
 	sampler->Release();
 	wallTexture->Release();
+	wallNormal->Release();
+	skyBoxRastState->Release();
+	skyBoxDepthState->Release();
+
+	delete cam;
+
+	delete guy;
+
+	delete feedButton;
+
 }
 
 // --------------------------------------------------------
@@ -79,9 +108,28 @@ void Game::Init()
 	// Helper methods for loading shaders, creating some basic
 	// geometry to draw and some simple camera matrices.
 	//  - You'll be expanding and/or replacing these later
+	CreateUIButtons();
 	LoadShaders();
 	CreateMatrices();
 	CreateBasicGeometry();
+	
+
+	
+
+	// Create a sampler state that holds options for sampling
+	// The descriptions should always just be local variables	
+
+	D3D11_RASTERIZER_DESC rasterDesc = {};
+	rasterDesc.FillMode = D3D11_FILL_SOLID;
+	rasterDesc.CullMode = D3D11_CULL_FRONT;
+	device->CreateRasterizerState(&rasterDesc, &skyBoxRastState);
+
+	D3D11_DEPTH_STENCIL_DESC depthScript = {};
+	depthScript.DepthEnable = true;
+	depthScript.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	depthScript.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+	device->CreateDepthStencilState(&depthScript, &skyBoxDepthState);
+
 
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
@@ -90,6 +138,14 @@ void Game::Init()
 	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(.4f, .3f, .9f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
 	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
+
+	guy = new Creature(device, context, sampler);
+
+	for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
+		debugCubes.push_back(new GameEntity(m4, debugMat, "debugcube"));
+	}
+
+
 }
 
 // --------------------------------------------------------
@@ -103,6 +159,13 @@ void Game::LoadShaders()
 	//Loading Textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
+
+
+	
+
+	// Load the sky box from a DDS file
+	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
+
 	D3D11_SAMPLER_DESC sd = {};
 	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	sd.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -110,11 +173,27 @@ void Game::LoadShaders()
 	sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	sd.MaxLOD = D3D11_FLOAT32_MAX;
 	device->CreateSamplerState(&sd, &sampler);
+
+
 	//Material 1
 	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	debugMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	debugMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
+	debugMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+	SkyBoxVertexShader = new SimpleVertexShader(device, context);
+	SkyBoxPixelShader = new SimplePixelShader(device, context);
+
+	
+
+	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
+	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+
+
 	//mat1->GetPixelShader()->SetShaderResourceView("");
+
+	feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");
 }
 
 
@@ -148,44 +227,23 @@ void Game::CreateBasicGeometry()
 	m4 = new Mesh("../Assets/Models/cube.obj", device);
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
-
-	abominationBody = new Mesh("../Assets/Models/abomination1/body.obj", device);
-	abominationEyeball = new Mesh("../Assets/Models/abomination1/eyeball.obj", device);
-	abomincationTentacle = new Mesh("../Assets/Models/abomination1/tentacle.obj", device);
-
-	//1 body
-	gameEntities.push_back(new GameEntity(abominationBody, mat1));
-	//3 eyes
-	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities.push_back(new GameEntity(abominationEyeball, mat1));
-	gameEntities[2]->Translate(XMFLOAT3(-1.1f, .4f, -.8f));
-	gameEntities[2]->Scale(XMFLOAT3(.7f, .7f, .7f));
-	gameEntities[3]->Translate(XMFLOAT3(1.1f, .4f, -.8f));
-	gameEntities[3]->Scale(XMFLOAT3(.7f, .7f, .7f));
-	//8 tentacles
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[5]->Rotate(XMFLOAT3(0, XM_PI, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[6]->Rotate(XMFLOAT3(0, XM_PI/4, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[7]->Rotate(XMFLOAT3(0, 3*XM_PI/4, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[8]->Rotate(XMFLOAT3(0, XM_PI/2, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[9]->Rotate(XMFLOAT3(0, 5*XM_PI/4, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[10]->Rotate(XMFLOAT3(0, 3*XM_PI/2, 0));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, mat1));
-	gameEntities[11]->Rotate(XMFLOAT3(0, 7*XM_PI/4, 0));
-
-	//models are big, scale em down
-	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
-		(*it)->Scale(XMFLOAT3(.5, .5, .5));
-	}
 }
 
+void Game::CreateUIButtons()
+{
+	UIVertex vertices1[] = {
+		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+	};
+
+	int indices[] = { 0, 1, 2, 3, 4, 5 };
+
+	feedButton = new UIButton(vertices1, 6, indices, 6, device, 31, 99, 118, 186);
+}
 
 // --------------------------------------------------------
 // Handle resizing DirectX "stuff" to match the new window size.
@@ -208,25 +266,34 @@ void Game::Update(float deltaTime, float totalTime)
 	if (GetAsyncKeyState(VK_ESCAPE))
 		Quit();
 
-	//a little bit of hover; have separate categories of parts hover at different times to give weight/flow
-	float multiplier = .001f;
-	float offset = .1f;
+	if (GetAsyncKeyState('P') & 0x8000) {
+		gs = PAUSE_MENU;
+	}
 
-	//body hover
-	gameEntities[0]->Translate(XMFLOAT3(0, sin(totalTime) * multiplier, 0));
-	//eyball hover
-	gameEntities[1]->Translate(XMFLOAT3(0, sin(totalTime + (2 * offset)) * multiplier, 0)); //first eyeball is ahead of the other two
-	for (int i = 2; i <= 3; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime + offset)*multiplier, 0));
+	guy->Update(deltaTime, totalTime);
+	//Debug Cubes
+	if (debugMode) {
+		for (int i = 0; i < guy->gameEntities.size(); i++) {
+			XMVECTOR newExtents = XMLoadFloat3(&(guy->gameEntities[i]->GetBoundingBox()->Extents)) * 2;
+			XMFLOAT3 nE;
+			XMStoreFloat3(&nE, newExtents);
+			debugCubes[i]->SetScale(nE);
+			debugCubes[i]->SetPosition(guy->gameEntities[i]->GetBoundingBox()->Center);
+		}
+		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
+			(*it)->CalculateWorldMatrix();
+		}
+		for (std::vector<GameEntity*>::iterator it = rayEntities.begin(); it != rayEntities.end(); ++it) {
+			(*it)->CalculateWorldMatrix();
+		}
 	}
-	//tentacle hover
-	for (int i = 4; i <= 11; i++) {
-		gameEntities[i]->Translate(XMFLOAT3(0, sin(totalTime - offset)*multiplier, 0));
-	}
+
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
+
+
 	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
@@ -250,12 +317,74 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
+
 	}
+
+	if (debugMode) {
+		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
+			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+			//(*it)->Draw(context, cam);
+		}
+		for (std::vector<GameEntity*>::iterator it = rayEntities.begin(); it != rayEntities.end(); ++it) {
+			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+			(*it)->Draw(context, cam);
+		}
+	}
+
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
+	//guy->Draw(context, cam);
+
+	
+
+
+	// Render the sky (after all opaque geometry)
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+
+
+	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
+	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
+
+	// Draw Feed Button
+	feedButton->Draw(context, cam->GetProjectionMatrix());
+
+
+	
+	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
+	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
+
+	SkyBoxVertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
+	SkyBoxVertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
+	SkyBoxVertexShader->CopyAllBufferData();
+	SkyBoxVertexShader->SetShader();
+
+	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
+	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
+	//SkyBoxPixelShader->CopyAllBufferData();
+	SkyBoxPixelShader->SetShader();
+	
+	context->RSSetState(skyBoxRastState);
+	context->OMSetDepthStencilState(skyBoxDepthState, 0);
+	int test = m4->GetIndexCount();
+	context->DrawIndexed(test, 0, 0);
+	
+	// At the end of the frame, reset render states
+	context->RSSetState(0);
+	context->OMSetDepthStencilState(0, 0);
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -274,6 +403,41 @@ void Game::Draw(float deltaTime, float totalTime)
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
+	//printf("x: %d", x);
+	//printf(", y: %d\n", y);
+
+	// RED FLAG: Hard-coded values atm - YIKES!
+	switch (gs) {
+		case START_MENU:
+			if (x >= button1->x && x <= button1->width && y >= button1->y && y <= button1->height) {
+				gs = IN_GAME;
+				printf("\nStarting game");
+			}
+
+			if (x >= button2->x && x <= button2->width && y >= button2->y && y <= button2->height) {
+				Quit();
+			}
+			break;
+		case IN_GAME:
+			if(x >= feedButton->x && x <= feedButton->width && y >= feedButton->y && y <= feedButton->height) {
+				guy->isFeeding = true;
+				printf("\nYou fed the thing");
+			}
+			break;
+		case PAUSE_MENU:
+			if (x >= button2->x && x <= button2->width && y >= button2->y && y <= button2->height) {
+				gs = IN_GAME;
+				printf("\nResuming game");
+			}
+			break;
+		case GAME_OVER:
+			if (x >= button3->x && x <= button3->width && y >= button3->y && y <= button3->height) {
+				gs = START_MENU;
+				printf("\nReturning to Start Menu");
+				// don't forget to reset in-game properties here or when transitioning to in-game from start menu
+			}
+			break;
+	}
 
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
@@ -330,60 +494,71 @@ void Game::OnMouseWheel(float wheelDelta, int x, int y)
 void Game::TestInteraction(int pMouseX, int pMouseY) {
 	//http://www.rastertek.com/dx11tut47.html
 	//https://code.msdn.microsoft.com/windowsapps/How-to-pick-and-manipulate-089639ab/sourcecode?fileId=124643&pathId=1248898311
-	float pointX, pointY;
-	XMMATRIX inverseViewMatrix, viewMatrix;
-	/*XMFLOAT4X4 inverseViewMatrixF, inverseEntityMatrix;
-	XMFLOAT3 direction;*/
-
-	pointX = ((2.0f * (float)pMouseX) / (float)width) - 1.0f;
-	pointY = (((2.0f * (float)pMouseY) / (float)height) - 1.0f) * -1.0f;
-
-	pointX = pointX / cam->GetProjectionMatrix()._11;
-	pointY = pointY / cam->GetProjectionMatrix()._22;
-
-	/*viewMatrix = XMLoadFloat4x4(&(cam->GetViewMatrix()));
-	inverseViewMatrix = XMMatrixInverse(nullptr, viewMatrix);
-	XMStoreFloat4x4(&inverseViewMatrixF, inverseViewMatrix);
-
-	direction.x = (pointX * inverseViewMatrixF._11) + (pointY * inverseViewMatrixF._21) + inverseViewMatrixF._31;
-	direction.y = (pointX * inverseViewMatrixF._12) + (pointY * inverseViewMatrixF._22) + inverseViewMatrixF._32;
-	direction.z = (pointX * inverseViewMatrixF._13) + (pointY * inverseViewMatrixF._23) + inverseViewMatrixF._33;
-	XMVECTOR rayDirectionView = XMVector3TransformNormal(XMLoadFloat3(&direction), inverseViewMatrix);
-	rayDirectionView = XMVector4Normalize(rayDirectionView);
-	XMVECTOR rayOriginView = XMVector3TransformCoord(XMVectorSet(0, 0, 0, 1), inverseViewMatrix);
-
-	XMFLOAT4X4 entityMatrix = gameEntities[0]->GetWorldMatrix(); 
-	XMMATRIX entityInverseWorldMatrix = XMMatrixInverse(nullptr, XMLoadFloat4x4(&(gameEntities[0]->GetWorldMatrix())));
-
-	XMVECTOR rayDirectionObject = XMVector3TransformNormal(rayDirectionView, entityInverseWorldMatrix);
-	rayDirectionObject = XMVector4Normalize(rayDirectionView);
-	XMVECTOR rayOriginObject = XMVector3TransformCoord(rayOriginView, entityInverseWorldMatrix);*/
-
-	//Unproject method
-	XMVECTOR ray1 = XMVector3Unproject(XMVectorSet((float)pMouseX, (float)pMouseY, 0.0, 1.0), 0, 0, width, height, 0, 1, XMLoadFloat4x4(&(cam->GetProjectionMatrix())), XMLoadFloat4x4(&(cam->GetViewMatrix())), XMLoadFloat4x4(&worldMatrix));
-	XMVECTOR ray2 = XMVector3Unproject(XMVectorSet((float)pMouseX, (float)pMouseY, 1.0, 1.0), 0, 0, width, height, 0, 1, XMLoadFloat4x4(&(cam->GetProjectionMatrix())), XMLoadFloat4x4(&(cam->GetViewMatrix())), XMLoadFloat4x4(&worldMatrix));
-	XMVECTOR ray3 = XMVector4Normalize(XMVectorSubtract(ray2, ray1));
+	float pointX = (((2.0f * (float)pMouseX) / (float)width) - 1.0f) / cam->GetProjectionMatrix()._11;
+	float pointY = ((((2.0f * (float)pMouseY) / (float)height) - 1.0f)) / cam->GetProjectionMatrix()._22;
 
 	XMVECTOR camPos = XMLoadFloat3(&(cam->GetPosition()));
 
-	//chris's method
-	XMVECTOR rayVS = XMVectorSet(pointX * -1, pointY * -1, 1, 0);
-	viewMatrix = XMLoadFloat4x4(&(cam->GetViewMatrix()));
-	inverseViewMatrix = XMMatrixInverse(nullptr, viewMatrix);
-	XMVECTOR rayWS = XMVector3TransformNormal(rayVS, inverseViewMatrix);
+	//chris's method (Turns out the camera's view matrix is already inverted
+	XMVECTOR rayVS = XMVectorSet(pointX, pointY * -1, 1, 0);
+	XMVECTOR rayWS = XMVector3TransformNormal(rayVS, XMLoadFloat4x4(&(cam->GetViewMatrix())));
 	rayWS = XMVector3Normalize(rayWS);
 
 	XMFLOAT3 rayDirectionF;
 	XMStoreFloat3(&rayDirectionF, rayWS);
-	rayDirectionF.x *= -1;
-	rayDirectionF.y *= -1;
-	XMFLOAT3 rayOriginF; 
-	XMStoreFloat3(&rayOriginF, XMVectorAdd(ray1, camPos));
+	XMFLOAT3 rayOriginF;
+	XMStoreFloat3(&rayOriginF, camPos);
 
-	gameEntities[0]->TestPick(rayOriginF, rayDirectionF);
+	////////////////////////////////////////////////////////DEBUG RAYS
+	if (debugMode) {
+		XMMATRIX inverseWorldMatrix = XMMatrixInverse(nullptr, XMMatrixTranspose(XMLoadFloat4x4(&guy->gameEntities[6]->GetWorldMatrix())));
+		XMVECTOR newOrigin = XMVector3Transform(XMLoadFloat3(&rayOriginF), inverseWorldMatrix);
+		XMVECTOR newDirection = XMVector3Normalize(XMVector3TransformNormal(XMLoadFloat3(&rayDirectionF), inverseWorldMatrix));
+		XMFLOAT3 debugOrigin1;
+		XMFLOAT3 debugOrigin2;
+		XMFLOAT3 debugEnd1;
+		XMFLOAT3 debugEnd2;
+		/*XMStoreFloat3(&debugOrigin1, XMLoadFloat3(&rayOriginF) + (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugOrigin2, XMLoadFloat3(&rayOriginF) - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugEnd1, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin1));
+		XMStoreFloat3(&debugEnd2, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin2));*/
+		XMStoreFloat3(&debugOrigin1, newOrigin + (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugOrigin2, newOrigin - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugEnd1, (newDirection * 100) + XMLoadFloat3(&debugOrigin1));
+		XMStoreFloat3(&debugEnd2, (newDirection * 100) + XMLoadFloat3(&debugOrigin2));
+		Vertex vertices[] =
+		{
+			{ debugEnd2, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+			{ debugOrigin2, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+			{ debugEnd1, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+			{ debugOrigin1, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+		};
+		unsigned indices[] = { 0, 2, 1, 1, 2, 3 };
 
-	//std::cout << rayOriginF.x << " "  << rayOriginF.y << " " << rayOriginF.z << "\n";
-	//std::cout << cam->GetPosition().x << " " << cam->GetPosition().y <<" " << cam->GetPosition().z << "\n";
-	std::cout << rayDirectionF.x<< " " << rayDirectionF.y << " " << rayDirectionF.z << "\n";
+		rayMeshes.push_back(new Mesh(vertices, 4, indices, 6, device));
+		rayEntities.push_back(new GameEntity(rayMeshes.back(), debugMat, "ray"));
+	}
+	////////////////////////////////////////////////////////////////
+
+	float minDistance = 1000; 
+	float currentDistance = 0;
+	GameEntity* closestEntity = nullptr;
+	for (int i = 0; i < guy->gameEntities.size(); i++) {
+		currentDistance = guy->gameEntities[i]->TestPick(rayOriginF, rayDirectionF);
+		if (currentDistance > 0) {
+			//std::cout << guy->gameEntities[i]->GetName() << "\n";
+		}
+		if (currentDistance > 0 && currentDistance < minDistance) {
+			minDistance = currentDistance;
+			closestEntity = guy->gameEntities[i];
+		}
+	}
+	if (closestEntity == nullptr) {
+		//std::cout << "No hit\n";
+		guy->guyState = Angry;
+	}
+	else {
+		guy->guyState = Happy;
+	}
 }
 #pragma endregion

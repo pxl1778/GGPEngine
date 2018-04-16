@@ -24,6 +24,7 @@ Camera::Camera()
 	direction = XMFLOAT3(0, 0, 1);
 	rotationX = 0;
 	rotationY = 0;
+	rotationSpeed = 20;
 }
 
 
@@ -65,23 +66,23 @@ void Camera::UpdateLookAt(float deltaTime, XMFLOAT3 pTargetLookAt) {
 	XMVECTOR upVector = XMVector3Cross(newForward, rightVector);
 	XMStoreFloat4(&v, upVector);
 	if (GetAsyncKeyState('W') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('S') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('D') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(rightVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(rightVector) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('A') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('Q') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
 	}
 
 	if (GetAsyncKeyState('E') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
 	}
 	//XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
 	XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&pTargetLookAt), XMVector3Normalize(upVector));
@@ -163,5 +164,22 @@ float Camera::GetRotationX() {
 
 float Camera::GetRotationY() {
 	return rotationY;
+}
+
+XMVECTOR Camera::GetUpVector(XMFLOAT3 pTargetLookAt) {
+	XMVECTOR newForward = XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position);
+	newForward = XMVector3Normalize(newForward);
+	XMVECTOR rightVector = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(newForward));
+	return XMVector3Normalize(XMVector3Cross(newForward, rightVector));
+}
+
+XMVECTOR Camera::GetRightVector(XMFLOAT3 pTargetLookAt) {
+	XMVECTOR newForward = XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position);
+	newForward = XMVector3Normalize(newForward);
+	return XMVector3Normalize(XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(newForward)));
+}
+
+XMVECTOR Camera::GetForwardVector(XMFLOAT3 pTargetLookAt) {
+	return XMVector3Normalize(XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position));
 }
 

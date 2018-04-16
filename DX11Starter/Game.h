@@ -10,6 +10,11 @@
 #include "WICTextureLoader.h"
 #include <vector>
 
+#include "Creature.h"
+
+#include "UIButton.h"
+
+
 class Game 
 	: public DXCore
 {
@@ -38,10 +43,14 @@ private:
 	void CreateBasicGeometry();
 	
 	void TestInteraction(int pMouseX, int pMouseY);
+	void CreateUIButtons();
 
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;
+	SimpleVertexShader* SkyBoxVertexShader;
 	SimplePixelShader* pixelShader;
+	SimplePixelShader* SkyBoxPixelShader;
+	
 
 	// The matrices to go from model space to screen space
 	DirectX::XMFLOAT4X4 worldMatrix;
@@ -59,22 +68,31 @@ private:
 	Mesh* m4;
 	Mesh* m5;
 	Mesh* m6;
+	Mesh* Box;
 
-	//Abomination meshes
-	Mesh* abominationEyeball;
-	Mesh* abominationBody;
-	Mesh* abomincationTentacle;
+	std::vector<Mesh*> rayMeshes;
+
+	
 
 	//Materials
 	Material* mat1;
+	Material* debugMat;
+	
 
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
 	ID3D11ShaderResourceView* wallNormal;
+	ID3D11ShaderResourceView* skyBoxSRV;
 	ID3D11SamplerState* sampler;
+
+
+	ID3D11RasterizerState* skyBoxRastState;
+	ID3D11DepthStencilState* skyBoxDepthState;
 
 	//Entities
 	std::vector<GameEntity*> gameEntities;
+	std::vector<GameEntity*> debugCubes;
+	std::vector<GameEntity*> rayEntities;
 
 	//Camera
 	Camera* cam;
@@ -83,5 +101,15 @@ private:
 	DirectionalLight dLight1;
 	DirectionalLight dLight2;
 	PointLight pLight1;
+
+
+	//main character
+	Creature* guy;
+
+	// UI Button
+	UIButton* feedButton;
+
+	bool debugMode = false;
+
 };
 

@@ -10,6 +10,7 @@ cbuffer externalData : register(b0)
 	matrix world;
 	matrix view;
 	matrix projection;
+	float4 color;
 };
 
 // Struct representing a single vertex worth of data
@@ -39,6 +40,7 @@ struct VertexShaderInput
 	float2 uv			: TEXCOORD;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
+
 };
 
 // Struct representing the data we're sending down the pipeline
@@ -58,6 +60,7 @@ struct VertexToPixel
 	float3 worldPos		: TEXCOORD1;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
+	float4 color		: COLOR;
 };
 
 // --------------------------------------------------------
@@ -91,6 +94,8 @@ VertexToPixel main( VertexShaderInput input )
 	output.normal = mul(input.normal, (float3x3)world);
 	output.uv = input.uv;
 	output.tangent = mul(input.tangent, (float3x3)world);
+
+	output.color = color;
 
 	// Whatever we return will make its way through the pipeline to the
 	// next programmable stage we're using (the pixel shader for now)

@@ -349,7 +349,6 @@ Mesh::~Mesh()
 }
 
 bool Mesh::TestPick(XMVECTOR pOrigin, XMVECTOR pDirection) {
-	pDirection = XMVector3Normalize(pDirection);
 	float dist = 0;
 	for (int i = 0; i < indicesCount;)
 	{
