@@ -67,7 +67,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	input.normal = normalize(finalNormal);
 
 	//lights
-	float dNdotL1 = round( saturate(dot(input.normal, -dLight1.Direction)));
+	float dNdotL1 = .5 + round( saturate(dot(input.normal, -dLight1.Direction)));
 	//float dNdotL2 = saturate(dot(input.normal, -dLight2.Direction));
 	//clamp shadow to one of two binary values, giving hard toon shade
 	//dNdotL1 = .5 + clamp(floor(dNdotL1), -1, 0);

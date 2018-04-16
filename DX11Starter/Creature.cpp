@@ -168,9 +168,9 @@ void Creature::Update(float deltaTime, float totalTime)
 				break;
 			case Angry:
 				//anim 1- tentacles recede into body
-				//if (gameEntities[i]->GetRotation().x < XM_PI / 4) {
-				//	gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-				//}
+				/*if (gameEntities[i]->GetRotation().x < XM_PI / 4) {
+					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
+				}*/
 				
 				//anim 2- tentacles curl in defensively
 				if (gameEntities[i]->GetRotation().x > -XM_PIDIV4) {
@@ -187,6 +187,9 @@ void Creature::Update(float deltaTime, float totalTime)
 					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
+				//if (gameEntities[i]->GetRotation().x < XM_PI / 4) {
+				//	gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
+				//}
 				gameEntities[i]->Rotate(XMFLOAT3(0, 2*deltaTime, 0));
 				break;
 		}
