@@ -366,6 +366,22 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	//Switch to post Process mode
 	//First Pass
+	int left = 0, right = 1, down = 0, up = 1;
+	if (GetAsyncKeyState('Q') & 0x8000) {
+		down = -5;
+	}
+	if (GetAsyncKeyState('E') & 0x8000) {
+		up = 5;
+	}
+	if (GetAsyncKeyState('A') & 0x8000) {
+		right = 5;
+	}
+	if (GetAsyncKeyState('D') & 0x8000) {
+		left = -5;
+	}
+
+
+
 
 	//set rendering to back buffer(so stuff actually draws)
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
@@ -374,10 +390,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	alphaPostPixelShader->SetShader();
 	alphaPostPixelShader->SetShaderResourceView("Pixels", alphaPostSRV);
 	alphaPostPixelShader->SetSamplerState("Sampler", sampler);
-	alphaPostPixelShader->SetInt("Bleft", 2);
-	alphaPostPixelShader->SetInt("Bright", 4);
-	alphaPostPixelShader->SetInt("Bup", 2);
-	alphaPostPixelShader->SetInt("Bdown", -2);
+	alphaPostPixelShader->SetInt("Bleft", left);
+	alphaPostPixelShader->SetInt("Bright", right);
+	alphaPostPixelShader->SetInt("Bup", up);
+	alphaPostPixelShader->SetInt("Bdown", down);
 
 	alphaPostPixelShader->SetFloat("pixelWidth", 1.0 / width);
 	alphaPostPixelShader->SetFloat("pixelHeight", 1.0 / height);
