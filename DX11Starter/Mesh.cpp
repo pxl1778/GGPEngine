@@ -48,6 +48,8 @@ Mesh::Mesh(Vertex* vertArray, int vertCount, unsigned* indices, int indicesCount
 	// Actually create the buffer with the initial data
 	// - Once we do this, we'll NEVER CHANGE THE BUFFER AGAIN
 	device->CreateBuffer(&ibd, &initialIndexData, &indexBuffer);
+	minSize = { -1, -1, -1 };
+	maxSize = { 1, 1, 1 };
 }
 
 Mesh::Mesh(char* pFileName, ID3D11Device* device) {
@@ -67,7 +69,8 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 	unsigned int vertCounter = 0;        // Count of vertices/indices
 	char chars[100];                     // String for line reading
 
-										 // Still have data left?
+	minSize = { 500, 500, 500 };
+	maxSize = { -500, -500, -500 };
 
 	while (obj.good())
 	{
@@ -110,6 +113,12 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 
 			// Add to the positions
 			positions.push_back(pos);
+			if (pos.x > maxSize.x) maxSize.x = pos.x;
+			if (pos.x < minSize.x) minSize.x = pos.x;
+			if (pos.y > maxSize.y) maxSize.y = pos.y;
+			if (pos.y < minSize.y) minSize.y = pos.y;
+			if (pos.z > maxSize.z) maxSize.z = pos.z;
+			if (pos.z < minSize.z) minSize.z = pos.z;
 		}
 		else if (chars[0] == 'f')
 		{
@@ -205,11 +214,18 @@ Mesh::Mesh(char* pFileName, ID3D11Device* device) {
 		}
 	}
 
+	XMStoreFloat3(&center, XMVectorDivide(XMVectorAdd(XMLoadFloat3(&maxSize), XMLoadFloat3(&minSize)), XMVectorSet(2.0f, 2.0f, 2.0f, 0.0f)));
+	XMStoreFloat3(&extents, XMVectorDivide(XMVectorSubtract(XMLoadFloat3(&maxSize), XMLoadFloat3(&minSize)), XMVectorSet(2.0f, 2.0f, 2.0f, 0.0f)));
+
 	// Close the file and create the actual buffers
 	obj.close();
 
 	//printf("%d \n", vertCounter);
 	CalculateTangents(&verts[0], vertCounter, &indices[0], vertCounter);
+	vertices = new Vertex[vertCounter]();
+	memcpy(vertices, &verts[0], sizeof(Vertex) * vertCounter);
+	indicesPointer = new unsigned int[vertCounter]();
+	memcpy(indicesPointer, &indices[0], sizeof(int) * vertCounter);
 
 	// Create the VERTEX BUFFER description -----------------------------------
 	// - The description is created on the stack because we only need
@@ -330,6 +346,40 @@ Mesh::~Mesh()
 	//Gotta release those DX11 things!
 	if (vertexBuffer) { vertexBuffer->Release(); }
 	if (indexBuffer) { indexBuffer->Release(); }
+}
+
+bool Mesh::TestPick(XMVECTOR pOrigin, XMVECTOR pDirection) {
+	float dist = 0;
+	for (int i = 0; i < indicesCount;)
+	{
+		unsigned int i1 = indicesPointer[i++];
+		unsigned int i2 = indicesPointer[i++];
+		unsigned int i3 = indicesPointer[i++];
+		XMVECTOR v1 = DirectX::XMLoadFloat3(&vertices[i1].Position);
+		XMVECTOR v2 = DirectX::XMLoadFloat3(&vertices[i2].Position);
+		XMVECTOR v3 = DirectX::XMLoadFloat3(&vertices[i3].Position); 
+		if (TriangleTests::Intersects(pOrigin, pDirection, v1, v2, v3, dist)) {
+			return true;
+		}
+	}
+	return false;
+
+}
+
+XMFLOAT3 Mesh::getMinSize() {
+	return minSize;
+}
+
+XMFLOAT3 Mesh::getMaxSize() {
+	return maxSize;
+}
+
+XMFLOAT3 Mesh::getExtents() {
+	return extents;
+}
+
+XMFLOAT3 Mesh::getCenter() {
+	return center;
 }
 
 ID3D11Buffer* Mesh::GetVertexBuffer()

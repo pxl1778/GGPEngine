@@ -42,12 +42,19 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 
 	//create geometry
 	//1 body
-	gameEntities.push_back(new GameEntity(abominationBody, bodyMat));
+	gameEntities.push_back(new GameEntity(abominationBody, bodyMat, "body"));
 	//3 eyes
+<<<<<<< HEAD
 	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral));
 	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral));
 	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral));
 	//gameEntities[1]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
+=======
+	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat, "eye1"));
+	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat, "eye2"));
+	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat, "eye3"));
+	gameEntities[1]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
+>>>>>>> master
 	gameEntities[2]->Translate(XMFLOAT3(-1.1f, .4f, -.8f));
 	gameEntities[2]->Scale(XMFLOAT3(.7f, .7f, .7f));
 	//gameEntities[2]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
@@ -55,20 +62,20 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	gameEntities[3]->Scale(XMFLOAT3(.7f, .7f, .7f));
 	//gameEntities[3]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
 	//8 tentacles
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities[5]->Rotate(XMFLOAT3(0, XM_PI, 0));				
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities[6]->Rotate(XMFLOAT3(0, XM_PI / 4, 0));			
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities[7]->Rotate(XMFLOAT3(0, 3 * XM_PI / 4, 0));		
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities[8]->Rotate(XMFLOAT3(0, XM_PI / 2, 0));			
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities[9]->Rotate(XMFLOAT3(0, 5 * XM_PI / 4, 0));		
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
-	gameEntities[10]->Rotate(XMFLOAT3(0, 3 * XM_PI / 2, 0));	
-	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle4"));
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle5"));
+	gameEntities[5]->Rotate(XMFLOAT3(0, XM_PI, 0));						   
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle6"));
+	gameEntities[6]->Rotate(XMFLOAT3(0, XM_PI / 4, 0));					   
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle7"));
+	gameEntities[7]->Rotate(XMFLOAT3(0, 3 * XM_PI / 4, 0));				   
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle8"));
+	gameEntities[8]->Rotate(XMFLOAT3(0, XM_PI / 2, 0));					  
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle9"));
+	gameEntities[9]->Rotate(XMFLOAT3(0, 5 * XM_PI / 4, 0));				 
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle10"));
+	gameEntities[10]->Rotate(XMFLOAT3(0, 3 * XM_PI / 2, 0));			
+	gameEntities.push_back(new GameEntity(abomincationTentacle, tentacleMat, "tentacle11"));
 	gameEntities[11]->Rotate(XMFLOAT3(0, 7 * XM_PI / 4, 0));
 
 	//models are big, scale em down
@@ -201,7 +208,7 @@ void Creature::Update(float deltaTime, float totalTime)
 }
 
 //for now draw method is hard coded to accept the right amount of lights in the scene; this will need to be changed if we change the lights
-void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1)
+void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture)
 {
 	//some colors to send to shader depending on guy's mood
 	XMFLOAT4 white = XMFLOAT4(1.00f, 1.0f, 1.0f, 1.0);
@@ -252,6 +259,13 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 
 
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+<<<<<<< HEAD
+=======
+		
+		(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("SkyTexture", skyBoxTexture);
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+>>>>>>> master
 		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &color, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
 	}

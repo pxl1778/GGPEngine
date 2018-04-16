@@ -11,7 +11,7 @@ Camera::Camera()
 	//    camera and the direction vector along which to look (as well as "up")
 	// - Another option is the LOOK AT function, to look towards a specific
 	//    point in 3D space
-	XMVECTOR pos = XMVectorSet(0, 0, -5, 0);
+	XMVECTOR pos = XMVectorSet(0, 0, -20, 0);
 	XMVECTOR dir = XMVectorSet(0, 0, 1, 0);
 	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 	XMMATRIX V = XMMatrixLookToLH(
@@ -20,10 +20,11 @@ Camera::Camera()
 		up);     // "Up" direction in 3D space (prevents roll)
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(V)); // Transpose for HLSL!
 	XMStoreFloat4x4(&projectionMatrix, XMMatrixIdentity());
-	position = XMFLOAT3(0, 0, -5);
+	position = XMFLOAT3(0, 0, -20);
 	direction = XMFLOAT3(0, 0, 1);
 	rotationX = 0;
 	rotationY = 0;
+	rotationSpeed = 20;
 }
 
 
@@ -65,27 +66,33 @@ void Camera::UpdateLookAt(float deltaTime, XMFLOAT3 pTargetLookAt) {
 	XMVECTOR upVector = XMVector3Cross(newForward, rightVector);
 	XMStoreFloat4(&v, upVector);
 	if (GetAsyncKeyState('W') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('S') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('D') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(rightVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(rightVector) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('A') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('Q') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
 	}
 
 	if (GetAsyncKeyState('E') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * 3 * deltaTime));
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
 	}
 	//XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
 	XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&pTargetLookAt), XMVector3Normalize(upVector));
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(newView));
+
+
+	XMMATRIX tr = XMMatrixTranslation(position.x, position.y, position.z);
+	//XMMATRIX ro = XMMatrixRotationRollPitchYaw(rotationX, rotationY, rotation.z);
+
+	XMStoreFloat4x4(&worldMatrix, XMMatrixTranspose(tr));
 }
 
 void Camera::UpdateProjectionMatrix(unsigned pWidth, unsigned pHeight) {
@@ -128,7 +135,7 @@ void Camera::UpdateRotation(float pX, float pY) {
 	if (rotationX < 0) {
 		rotationX = 3.14;
 	}*/
-	printf("%.2f", rotationX); printf("  "); printf("%.2f", rotationY); printf("\n");
+	//printf("%.2f", rotationX); printf("  "); printf("%.2f", rotationY); printf("\n");
 }
 
 XMFLOAT4X4 Camera::GetViewMatrix() {
@@ -137,6 +144,10 @@ XMFLOAT4X4 Camera::GetViewMatrix() {
 
 XMFLOAT4X4 Camera::GetProjectionMatrix() {
 	return projectionMatrix;
+}
+
+XMFLOAT4X4 Camera::GetWorldMatrix() {
+	return worldMatrix;
 }
 
 XMFLOAT3 Camera::GetPosition() {
@@ -153,5 +164,22 @@ float Camera::GetRotationX() {
 
 float Camera::GetRotationY() {
 	return rotationY;
+}
+
+XMVECTOR Camera::GetUpVector(XMFLOAT3 pTargetLookAt) {
+	XMVECTOR newForward = XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position);
+	newForward = XMVector3Normalize(newForward);
+	XMVECTOR rightVector = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(newForward));
+	return XMVector3Normalize(XMVector3Cross(newForward, rightVector));
+}
+
+XMVECTOR Camera::GetRightVector(XMFLOAT3 pTargetLookAt) {
+	XMVECTOR newForward = XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position);
+	newForward = XMVector3Normalize(newForward);
+	return XMVector3Normalize(XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(newForward)));
+}
+
+XMVECTOR Camera::GetForwardVector(XMFLOAT3 pTargetLookAt) {
+	return XMVector3Normalize(XMLoadFloat3(&pTargetLookAt) - XMLoadFloat3(&position));
 }
 
