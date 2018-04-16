@@ -43,12 +43,6 @@ Game::~Game()
 {
 	// Delete our simple shader objects, which
 	// will clean up their own internal DirectX stuff
-	sampler->Release();
-	wallTexture->Release();
-	wallNormal->Release();
-	skyBoxRastState->Release();
-	skyBoxDepthState->Release();
-
 	delete vertexShader;
 	delete pixelShader;
 
@@ -58,13 +52,14 @@ Game::~Game()
 	delete m4;
 	delete m5; 
 	delete m6;
-	//delete Box;
 
+
+	
 	delete SkyBoxPixelShader;
 	delete SkyBoxVertexShader;
 
 	delete mat1;
-	//delete SkyBoxMat;
+	
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
@@ -72,25 +67,20 @@ Game::~Game()
 	}
 	gameEntities.clear();
 
+	sampler->Release();
+	wallTexture->Release();
+	wallNormal->Release();
+	skyBoxRastState->Release();
+	skyBoxDepthState->Release();
+	
+
 	delete cam;
+
 
 	delete guy;
 
-	// delete UI feed button
 	delete feedButton;
 
-	// Clean up refraction resources
-	refractSampler->Release();
-	refractionRTV->Release();
-	refractionSRV->Release();
-	delete quadVS;
-	delete quadPS;
-	delete refractVS;
-	delete refractPS;
-
-	delete refractionEntity;
-	delete refractionMat;
-	refractionNormalMap->Release();
 }
 
 // --------------------------------------------------------
@@ -124,57 +114,6 @@ void Game::Init()
 	depthScript.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&depthScript, &skyBoxDepthState);
 
-	// Refraction setup ------------------------
-	ID3D11Texture2D* refractionRenderTexture;
-
-	// Set up render texture
-	D3D11_TEXTURE2D_DESC rtDesc = {};
-	rtDesc.Width = width;
-	rtDesc.Height = height;
-	rtDesc.MipLevels = 1;
-	rtDesc.ArraySize = 1;
-	rtDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	rtDesc.Usage = D3D11_USAGE_DEFAULT;
-	rtDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	rtDesc.CPUAccessFlags = 0;
-	rtDesc.MiscFlags = 0;
-	rtDesc.SampleDesc.Count = 1;
-	rtDesc.SampleDesc.Quality = 0;
-	device->CreateTexture2D(&rtDesc, 0, &refractionRenderTexture);
-
-
-	// Set up render target view
-	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
-	rtvDesc.Format = rtDesc.Format;
-	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-	rtvDesc.Texture2D.MipSlice = 0;
-	device->CreateRenderTargetView(refractionRenderTexture, &rtvDesc, &refractionRTV);
-
-	// Set up shader resource view for same texture
-	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-	srvDesc.Format = rtDesc.Format;
-	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	srvDesc.Texture2D.MipLevels = 1;
-	srvDesc.Texture2D.MostDetailedMip = 0;
-	device->CreateShaderResourceView(refractionRenderTexture, &srvDesc, &refractionSRV);
-
-	// All done with this texture ref
-	refractionRenderTexture->Release();
-
-	// Set up a sampler that uses clamp addressing
-	// for use when doing refration - this is useful so 
-	// that we don't wrap the refraction from the other
-	// side of the screen
-	D3D11_SAMPLER_DESC rSamp = {};
-	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.Filter = D3D11_FILTER_ANISOTROPIC;
-	rSamp.MaxAnisotropy = 16;
-	rSamp.MaxLOD = D3D11_FLOAT32_MAX;
-
-	// Ask DirectX for the actual object
-	device->CreateSamplerState(&rSamp, &refractSampler);
 
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
@@ -185,6 +124,10 @@ void Game::Init()
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 
 	guy = new Creature(device, context, sampler);
+
+
+
+
 }
 
 // --------------------------------------------------------
@@ -229,27 +172,7 @@ void Game::LoadShaders()
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 
-	// UI button shader
 	feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");
-
-	// Refraction shaders
-	quadVS = new SimpleVertexShader(device, context);
-	quadVS->LoadShaderFile(L"FullscreenQuadVS.cso");
-
-	quadPS = new SimplePixelShader(device, context);
-	quadPS->LoadShaderFile(L"FullscreenQuadPS.cso");
-
-	refractVS = new SimpleVertexShader(device, context);
-	refractVS->LoadShaderFile(L"RefractVS.cso");
-
-	refractPS = new SimplePixelShader(device, context);
-	refractPS->LoadShaderFile(L"RefractPS.cso");
-
-	// load in normal map for refraction object
-	CreateWICTextureFromFile(device, context, L"../Assets/Textures/water_normal.png", 0, &refractionNormalMap);
-
-	// create the material of refraction object
-	refractionMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), 0, refractionNormalMap, sampler);
 }
 
 
@@ -284,6 +207,9 @@ void Game::CreateBasicGeometry()
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
+
+	
+
 	//gameEntities.push_back(new GameEntity(m1, mat1));
 	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
 	//gameEntities.push_back(new GameEntity(m2, mat1));
@@ -291,110 +217,23 @@ void Game::CreateBasicGeometry()
 	//gameEntities.push_back(new GameEntity(m3, mat1));
 	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
 
-	// Set up the refraction entity (the object that refracts)
-	refractionEntity = new GameEntity(m1, refractionMat); 
-	refractionEntity->SetPosition(XMFLOAT3(0, 0, 0));
-	refractionEntity->SetScale(XMFLOAT3(10, 10, 10));
+	
 }
 
 void Game::CreateUIButtons()
 {
 	UIVertex vertices1[] = {
-		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Bottom-Left
-		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Top-Left
-		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Bottom-Right
-		//{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
-		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Top-Right
-		//{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
+		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
 	};
 
-	int indices[] = { 0, 1, 2, 3 };
+	int indices[] = { 0, 1, 2, 3, 4, 5 };
 
-	feedButton = new UIButton(vertices1, 4, indices, 4, device, 31, 99, 118, 186);
-}
-
-void Game::DrawScene()
-{
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
-}
-
-void Game::DrawSky()
-{
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-
-	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
-	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
-
-	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
-	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
-
-	SkyBoxVertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
-	SkyBoxVertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
-	SkyBoxVertexShader->CopyAllBufferData();
-	SkyBoxVertexShader->SetShader();
-
-	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
-	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
-	//SkyBoxPixelShader->CopyAllBufferData();
-	SkyBoxPixelShader->SetShader();
-
-	context->RSSetState(skyBoxRastState);
-	context->OMSetDepthStencilState(skyBoxDepthState, 0);
-	int test = m4->GetIndexCount();
-	context->DrawIndexed(test, 0, 0);
-
-	// At the end of the frame, reset render states
-	context->RSSetState(0);
-	context->OMSetDepthStencilState(0, 0);
-}
-
-void Game::DrawRefraction()
-{
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	ID3D11Buffer* vb = refractionEntity->GetMesh()->GetVertexBuffer();
-	ID3D11Buffer* ib = refractionEntity->GetMesh()->GetIndexBuffer();
-	context->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
-	context->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
-
-	// Setup vertex shader
-	refractVS->SetMatrix4x4("world", refractionEntity->GetWorldMatrix());
-	refractVS->SetMatrix4x4("view", cam->GetViewMatrix());
-	refractVS->SetMatrix4x4("projection", cam->GetProjectionMatrix());
-	refractVS->CopyAllBufferData();
-	refractVS->SetShader();
-
-	// Setup pixel shader
-	refractPS->SetShaderResourceView("ScenePixels", refractionSRV);	// Pixels of the screen
-	refractPS->SetShaderResourceView("NormalMap", refractionNormalMap);	// Normal map for the object itself
-	refractPS->SetSamplerState("BasicSampler", sampler);			// Sampler for the normal map
-	refractPS->SetSamplerState("RefractSampler", refractSampler);	// Uses CLAMP on the edges
-	refractPS->SetFloat3("CameraPosition", cam->GetPosition());
-	refractPS->SetMatrix4x4("view", cam->GetViewMatrix());				// View matrix, so we can put normals into view space
-	refractPS->CopyAllBufferData();
-	refractPS->SetShader();
-
-	// Finally do the actual drawing
-	context->DrawIndexed(refractionEntity->GetMesh()->GetIndexCount(), 0, 0);
-}
-
-void Game::DrawFullscreenQuad(ID3D11ShaderResourceView * texture)
-{
-	// First, turn off our buffers, as we'll be generating the vertex
-	// data on the fly in a special vertex shader using the index of each vert
-	context->IASetVertexBuffers(0, 0, 0, 0, 0);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	// Set up the fullscreen quad shaders
-	quadVS->SetShader();
-
-	quadPS->SetShaderResourceView("Pixels", texture);
-	quadPS->SetSamplerState("Sampler", sampler);
-	quadPS->SetShader();
-
-	// Draw
-	context->Draw(3, 0);
+	feedButton = new UIButton(vertices1, 6, indices, 6, device, 31, 99, 118, 186);
 }
 
 // --------------------------------------------------------
@@ -425,6 +264,9 @@ void Game::Update(float deltaTime, float totalTime)
 	guy->Update(deltaTime, totalTime);
 
 
+
+	
+
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
@@ -432,9 +274,6 @@ void Game::Update(float deltaTime, float totalTime)
 	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
-
-	refractionEntity->Rotate(XMFLOAT3(0, deltaTime * 0.25f, 0));
-	refractionEntity->CalculateWorldMatrix();
 }
 
 // --------------------------------------------------------
@@ -449,17 +288,13 @@ void Game::Draw(float deltaTime, float totalTime)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
 	context->ClearRenderTargetView(backBufferRTV, color);
-	context->ClearRenderTargetView(refractionRTV, color);
 	context->ClearDepthStencilView(
 		depthStencilView,
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
 
-	// Use our refraction render target and our regular depth buffer
-	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
-
-	//XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
 
 	/*for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
@@ -470,21 +305,24 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	}*/
 
-	// Draw the scene (WITHOUT the refracting object)
-	DrawScene();
-	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
 	//guy->Draw(context, cam);
 
-	// Draw Feed Button
-	feedButton->Draw(context, cam->GetProjectionMatrix(), cam->GetViewMatrix());
+	
+
 
 	// Render the sky (after all opaque geometry)
-	/*UINT stride = sizeof(Vertex);
+	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
 
 
 	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
 	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
+
+	// Draw Feed Button
+	feedButton->Draw(context, cam->GetProjectionMatrix());
+
+
 	
 	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
 	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
@@ -506,30 +344,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	
 	// At the end of the frame, reset render states
 	context->RSSetState(0);
-	context->OMSetDepthStencilState(0, 0);*/
-	DrawSky();
-
-	// Back to the screen, but NO depth buffer for now!
-	// We just need to plaster the pixels from the render target onto the 
-	// screen without affecting (or respecting) the existing depth buffer
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-
-	// Draw a fullscreen quad with our render target texture (so the user can see
-	// what we've drawn so far).  
-	DrawFullscreenQuad(refractionSRV);
-
-	// Turn the depth buffer back on, so we can still
-	// used the depths from our earlier scene render
-	context->OMSetRenderTargets(1, &backBufferRTV, depthStencilView);
-
-	// Draw the refraction object
-	DrawRefraction();
-
-	// Unbind all textures at the end of the frame
-	// This is a good idea any time we're using extra render targets
-	// that we intend to sample from on the next frame
-	ID3D11ShaderResourceView* nullSRV[16] = {};
-	context->PSSetShaderResources(0, 16, nullSRV);
+	context->OMSetDepthStencilState(0, 0);
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -548,8 +363,8 @@ void Game::Draw(float deltaTime, float totalTime)
 void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 {
 	// Add any custom code here...
-	//printf("x: %d", x);
-	//printf(", y: %d\n", y);
+	printf("x: %d", x);
+	printf(", y: %d\n", y);
 
 	// RED FLAG: Hard-coded values atm - YIKES!
 	switch (gs) {

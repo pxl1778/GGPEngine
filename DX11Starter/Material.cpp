@@ -15,10 +15,6 @@ Material::Material(SimpleVertexShader* pVertexShader, SimplePixelShader* pPixelS
 
 Material::~Material()
 {
-	//texture->Release();
-	//normal->Release();
-	//sampler->Release();
-
 	delete vertexShader;
 	delete pixelShader;
 }

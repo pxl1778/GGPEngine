@@ -13,7 +13,7 @@ public:
 	ID3D11SamplerState* GetSampler();
 
 private:
-	SimpleVertexShader * vertexShader;
+	SimpleVertexShader* vertexShader;
 	SimplePixelShader* pixelShader;
 	ID3D11ShaderResourceView* texture;
 	ID3D11ShaderResourceView* normal;

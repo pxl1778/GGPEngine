@@ -107,9 +107,8 @@ private:
 	DirectX::SimpleMath::Vector2 m_fontPos2;
 	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
 
-	// projection Matrix for GUI buttons
+	// projection Matrix for UI buttons
 	DirectX::XMFLOAT4X4 projectionMatrix;
-	DirectX::XMFLOAT4X4 viewMatrix;
 
 	void CreateUIButtons();
 
