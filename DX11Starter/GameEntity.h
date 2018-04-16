@@ -3,10 +3,11 @@
 #include "Mesh.h"
 #include "Material.h"
 #include "Camera.h"
+#include "DirectXCollision.h"
 class GameEntity
 {
 public:
-	GameEntity(Mesh* pMeshPointer, Material* pMaterial);
+	GameEntity(Mesh* pMeshPointer, Material* pMaterial, std::string pName);
 	~GameEntity();
 
 	Mesh* GetMesh();
@@ -15,6 +16,8 @@ public:
 	DirectX::XMFLOAT3 GetPosition();
 	DirectX::XMFLOAT3 GetRotation();
 	DirectX::XMFLOAT3 GetScale();
+	DirectX::BoundingBox* GetBoundingBox();
+	
 
 	void SetWorldMatrix(DirectX::XMFLOAT4X4 pWorldMatrix);
 	void SetPosition(DirectX::XMFLOAT3 pPosition);
@@ -25,15 +28,22 @@ public:
 	void Rotate(DirectX::XMFLOAT3 pRotate);
 	void Scale(DirectX::XMFLOAT3 pScale);
 
+	float TestPick(DirectX::XMFLOAT3 pOrigin, DirectX::XMFLOAT3 pDirection);
+	std::string GetName();
+
 	void CalculateWorldMatrix();
 	void Draw(ID3D11DeviceContext* pContext, Camera* pCam);
 	void PrepareMaterial(DirectX::XMFLOAT4X4 pView, DirectX::XMFLOAT4X4 pProjection, DirectX::XMFLOAT3 pCamPosition);
 private:
 	Mesh* meshPointer;
+	Mesh* debugBox;
 	Material* material;
 	DirectX::XMFLOAT4X4 worldMatrix;
 	DirectX::XMFLOAT3 position;
 	DirectX::XMFLOAT3 rotation;
 	DirectX::XMFLOAT3 scale;
+	DirectX::BoundingBox* box;
+	std::string name;
+	void RecalculateBox();
 };
 

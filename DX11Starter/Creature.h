@@ -9,6 +9,8 @@
 #include "WICTextureLoader.h"
 #include <vector>
 
+enum CreatureState { Neutral, Happy, Angry };
+
 class Creature
 {
 public:
@@ -20,7 +22,6 @@ public:
 	std::vector<GameEntity*> gameEntities;
 
 	//creature state stuff
-	enum CreatureState{Neutral, Happy, Angry};
 	CreatureState guyState;
 
 	bool isFeeding;

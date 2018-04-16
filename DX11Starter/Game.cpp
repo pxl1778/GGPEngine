@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Vertex.h"
+#include "DirectXCollision.h"
 #include "WICTextureLoader.h"
 #include "DDSTextureLoader.h"
 // For the DirectX Math library
@@ -58,19 +59,36 @@ Game::~Game()
 	delete m4;
 	delete m5; 
 	delete m6;
-	//delete Box;
 
 	delete SkyBoxPixelShader;
 	delete SkyBoxVertexShader;
 
 	delete mat1;
-	//delete SkyBoxMat;
+	delete debugMat;
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
 		gameEntities.pop_back();
 	}
 	gameEntities.clear();
+
+	while (!debugCubes.empty()) {
+		delete debugCubes.back();
+		debugCubes.pop_back();
+	}
+	debugCubes.clear();
+
+	while (!rayEntities.empty()) {
+		delete rayEntities.back();
+		rayEntities.pop_back();
+	}
+	rayEntities.clear();
+
+	while (!rayMeshes.empty()) {
+		delete rayMeshes.back();
+		rayMeshes.pop_back();
+	}
+	rayMeshes.clear();
 
 	delete cam;
 
@@ -185,6 +203,11 @@ void Game::Init()
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 
 	guy = new Creature(device, context, sampler);
+
+	for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
+		debugCubes.push_back(new GameEntity(m4, debugMat, "debugcube"));
+	}
+
 }
 
 // --------------------------------------------------------
@@ -216,6 +239,9 @@ void Game::LoadShaders()
 
 	//Material 1
 	mat1 = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	debugMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	debugMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
+	debugMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
@@ -284,15 +310,8 @@ void Game::CreateBasicGeometry()
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
 
-	//gameEntities.push_back(new GameEntity(m1, mat1));
-	//gameEntities[0]->SetPosition(XMFLOAT3(.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m2, mat1));
-	//gameEntities[1]->SetPosition(XMFLOAT3(-.7f, 0, 0));
-	//gameEntities.push_back(new GameEntity(m3, mat1));
-	//gameEntities[2]->SetPosition(XMFLOAT3(0, 0, -1));
-
 	// Set up the refraction entity (the object that refracts)
-	refractionEntity = new GameEntity(m1, refractionMat); 
+	refractionEntity = new GameEntity(m1, refractionMat, "refractionBall"); 
 	refractionEntity->SetPosition(XMFLOAT3(0, 0, 0));
 	refractionEntity->SetScale(XMFLOAT3(10, 10, 10));
 }
@@ -423,11 +442,28 @@ void Game::Update(float deltaTime, float totalTime)
 	}
 
 	guy->Update(deltaTime, totalTime);
+	//Debug Cubes
+	if (debugMode) {
+		for (int i = 0; i < guy->gameEntities.size(); i++) {
+			XMVECTOR newExtents = XMLoadFloat3(&(guy->gameEntities[i]->GetBoundingBox()->Extents)) * 2;
+			XMFLOAT3 nE;
+			XMStoreFloat3(&nE, newExtents);
+			debugCubes[i]->SetScale(nE);
+			debugCubes[i]->SetPosition(guy->gameEntities[i]->GetBoundingBox()->Center);
+		}
+		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
+			(*it)->CalculateWorldMatrix();
+		}
+		for (std::vector<GameEntity*>::iterator it = rayEntities.begin(); it != rayEntities.end(); ++it) {
+			(*it)->CalculateWorldMatrix();
+		}
+	}
 
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
+
 
 	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
@@ -459,16 +495,33 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Use our refraction render target and our regular depth buffer
 	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
 
-	//XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+	XMFLOAT4 white = XMFLOAT4(1.0, 1.0, 1.0, 1.0);
 
-	/*for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
+	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-		(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
 
-	}*/
+	}
+
+	if (debugMode) {
+		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
+			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+			//(*it)->Draw(context, cam);
+		}
+		for (std::vector<GameEntity*>::iterator it = rayEntities.begin(); it != rayEntities.end(); ++it) {
+			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+			(*it)->Draw(context, cam);
+		}
+	}
 
 	// Draw the scene (WITHOUT the refracting object)
 	DrawScene();
@@ -588,6 +641,8 @@ void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 	prevMousePos.x = x;
 	prevMousePos.y = y;
 
+	TestInteraction(x, y);
+
 	// Caputure the mouse so we keep getting mouse move
 	// events even if the mouse leaves the window.  we'll be
 	// releasing the capture once a mouse button is released
@@ -617,6 +672,7 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 	if (buttonState & 0x0001)
 	{
 		cam->UpdateRotation((x - (float)prevMousePos.x) * 0.005f, (y - (float)prevMousePos.y) * 0.005f);
+		TestInteraction(x, y);
 	}
 	// Save the previous mouse position, so we have it for the future
 	prevMousePos.x = x;
@@ -631,5 +687,76 @@ void Game::OnMouseMove(WPARAM buttonState, int x, int y)
 void Game::OnMouseWheel(float wheelDelta, int x, int y)
 {
 	// Add any custom code here...
+}
+
+void Game::TestInteraction(int pMouseX, int pMouseY) {
+	//http://www.rastertek.com/dx11tut47.html
+	//https://code.msdn.microsoft.com/windowsapps/How-to-pick-and-manipulate-089639ab/sourcecode?fileId=124643&pathId=1248898311
+	float pointX = (((2.0f * (float)pMouseX) / (float)width) - 1.0f) / cam->GetProjectionMatrix()._11;
+	float pointY = ((((2.0f * (float)pMouseY) / (float)height) - 1.0f)) / cam->GetProjectionMatrix()._22;
+
+	XMVECTOR camPos = XMLoadFloat3(&(cam->GetPosition()));
+
+	//chris's method (Turns out the camera's view matrix is already inverted
+	XMVECTOR rayVS = XMVectorSet(pointX, pointY * -1, 1, 0);
+	XMVECTOR rayWS = XMVector3TransformNormal(rayVS, XMLoadFloat4x4(&(cam->GetViewMatrix())));
+	rayWS = XMVector3Normalize(rayWS);
+
+	XMFLOAT3 rayDirectionF;
+	XMStoreFloat3(&rayDirectionF, rayWS);
+	XMFLOAT3 rayOriginF;
+	XMStoreFloat3(&rayOriginF, camPos);
+
+	////////////////////////////////////////////////////////DEBUG RAYS
+	if (debugMode) {
+		XMMATRIX inverseWorldMatrix = XMMatrixInverse(nullptr, XMMatrixTranspose(XMLoadFloat4x4(&guy->gameEntities[6]->GetWorldMatrix())));
+		XMVECTOR newOrigin = XMVector3Transform(XMLoadFloat3(&rayOriginF), inverseWorldMatrix);
+		XMVECTOR newDirection = XMVector3Normalize(XMVector3TransformNormal(XMLoadFloat3(&rayDirectionF), inverseWorldMatrix));
+		XMFLOAT3 debugOrigin1;
+		XMFLOAT3 debugOrigin2;
+		XMFLOAT3 debugEnd1;
+		XMFLOAT3 debugEnd2;
+		/*XMStoreFloat3(&debugOrigin1, XMLoadFloat3(&rayOriginF) + (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugOrigin2, XMLoadFloat3(&rayOriginF) - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugEnd1, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin1));
+		XMStoreFloat3(&debugEnd2, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin2));*/
+		XMStoreFloat3(&debugOrigin1, newOrigin + (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugOrigin2, newOrigin - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugEnd1, (newDirection * 100) + XMLoadFloat3(&debugOrigin1));
+		XMStoreFloat3(&debugEnd2, (newDirection * 100) + XMLoadFloat3(&debugOrigin2));
+		Vertex vertices[] =
+		{
+			{ debugEnd2, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+			{ debugOrigin2, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+			{ debugEnd1, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+			{ debugOrigin1, XMFLOAT2(1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) },
+		};
+		unsigned indices[] = { 0, 2, 1, 1, 2, 3 };
+
+		rayMeshes.push_back(new Mesh(vertices, 4, indices, 6, device));
+		rayEntities.push_back(new GameEntity(rayMeshes.back(), debugMat, "ray"));
+	}
+	////////////////////////////////////////////////////////////////
+
+	float minDistance = 1000; 
+	float currentDistance = 0;
+	GameEntity* closestEntity = nullptr;
+	for (int i = 0; i < guy->gameEntities.size(); i++) {
+		currentDistance = guy->gameEntities[i]->TestPick(rayOriginF, rayDirectionF);
+		if (currentDistance > 0) {
+			//std::cout << guy->gameEntities[i]->GetName() << "\n";
+		}
+		if (currentDistance > 0 && currentDistance < minDistance) {
+			minDistance = currentDistance;
+			closestEntity = guy->gameEntities[i];
+		}
+	}
+	if (closestEntity == nullptr) {
+		//std::cout << "No hit\n";
+		guy->guyState = Angry;
+	}
+	else {
+		guy->guyState = Happy;
+	}
 }
 #pragma endregion

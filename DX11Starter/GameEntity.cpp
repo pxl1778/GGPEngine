@@ -2,7 +2,7 @@
 
 
 using namespace DirectX;
-GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
+GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial, std::string pName)
 {
 	this->meshPointer = pMeshPointer;
 	this->material = pMaterial;
@@ -10,12 +10,32 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial)
 	position = XMFLOAT3(0, 0, 0);
 	rotation = XMFLOAT3(0, 0, 0);
 	scale = XMFLOAT3(1, 1, 1);
+	box = new BoundingBox();
+	box->Center = position;
+	box->Extents = meshPointer->getExtents();
+	name = pName;
+
+	//load in cube because it's 1x1x1, multiply scale by extents
+
+	/*Vertex vertices[] =
+	{
+		{ XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT3(-0.5f, -0.5f, +0.5f) },
+		{ XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT3(+0.5f, -0.5f, +0.5f) },
+		{ XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT3(-0.5f, +0.5f, +0.5f) },
+		{ XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
+		{ XMFLOAT3(-0.5f, +0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
+		{ XMFLOAT3(+0.5f, +0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
+		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
+		{ XMFLOAT3(+0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
+	};
+	unsigned indices[] = { 0, 2, 1, 1, 2, 3, };
+
+	debugBox = new Mesh(vertices, 4, indices, 6, device);*/
 }
 
 
 GameEntity::~GameEntity()
 {
-
 }
 
 Mesh* GameEntity::GetMesh() {
@@ -40,6 +60,78 @@ XMFLOAT3 GameEntity::GetRotation() {
 
 XMFLOAT3 GameEntity::GetScale() {
 	return scale;
+}
+
+BoundingBox* GameEntity::GetBoundingBox() {
+	return box;
+}
+
+std::string GameEntity::GetName() {
+	return name;
+}
+
+float GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
+
+	XMStoreFloat3(&(box->Extents), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getExtents())), XMLoadFloat3(&scale)));
+	XMStoreFloat3(&(box->Center), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getCenter())), XMLoadFloat3(&scale)));
+	XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(box->Center)), XMMatrixRotationRollPitchYaw(rotation.x, -rotation.y, rotation.z)));
+	XMStoreFloat3(&(box->Center), XMVectorAdd(XMLoadFloat3(&(box->Center)), XMLoadFloat3(&position)));
+
+	//XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(meshPointer->getCenter())), XMMatrixTranspose(XMLoadFloat4x4(&worldMatrix))));
+
+	//recalculate bounding box center and extents whenver it changes
+	RecalculateBox();
+
+	float dist;
+	bool win = box->Intersects(XMLoadFloat3(&pOrigin), XMLoadFloat3(&pDirection), dist);
+	if (win) {
+		std::cout << name << "\n";
+		XMMATRIX inverseWorldMatrix = XMMatrixInverse(nullptr, XMMatrixTranspose(XMLoadFloat4x4(&worldMatrix)));
+		XMVECTOR newOrigin = XMVector3Transform(XMLoadFloat3(&pOrigin), inverseWorldMatrix);
+		XMVECTOR newDirection = XMVector3Normalize(XMVector3TransformNormal(XMLoadFloat3(&pDirection), inverseWorldMatrix));
+
+		//now do triangle hits
+		if (meshPointer->TestPick(newOrigin, newDirection)) {
+			return dist;
+		}
+		else {
+			//here you didn't hit the mesh
+		}
+	}
+	else {
+		//here you didn't hit the box
+	}
+	return 0;
+}
+
+
+void GameEntity::RecalculateBox() {
+	//calculate box to rotate to make extents
+	std::vector<XMFLOAT3> points;
+	points.push_back(XMFLOAT3(box->Extents.x, box->Extents.y, box->Extents.z));
+	points.push_back(XMFLOAT3(-box->Extents.x, box->Extents.y, box->Extents.z));
+	points.push_back(XMFLOAT3(-box->Extents.x, -box->Extents.y, box->Extents.z));
+	points.push_back(XMFLOAT3(box->Extents.x, -box->Extents.y, box->Extents.z));
+	points.push_back(XMFLOAT3(-box->Extents.x, -box->Extents.y, -box->Extents.z));
+	points.push_back(XMFLOAT3(-box->Extents.x, box->Extents.y, -box->Extents.z));
+	points.push_back(XMFLOAT3(box->Extents.x, -box->Extents.y, -box->Extents.z));
+	points.push_back(XMFLOAT3(box->Extents.x, box->Extents.y, -box->Extents.z));
+
+	for (int i = 0; i < points.size(); i++) {
+		XMStoreFloat3(&(points[i]), XMVector3Transform(XMLoadFloat3(&(points[i])), XMMatrixRotationRollPitchYaw(rotation.x, rotation.y, rotation.z)));
+	}
+	XMFLOAT3 minSize = { 500, 500, 500 };
+	XMFLOAT3 maxSize = { -500, -500, -500 };
+	for (int i = 0; i < points.size(); i++) {
+		if (points[i].x > maxSize.x) maxSize.x = points[i].x;
+		if (points[i].x < minSize.x) minSize.x = points[i].x;
+		if (points[i].y > maxSize.y) maxSize.y = points[i].y;
+		if (points[i].y < minSize.y) minSize.y = points[i].y;
+		if (points[i].z > maxSize.z) maxSize.z = points[i].z;
+		if (points[i].z < minSize.z) minSize.z = points[i].z;
+	}
+
+	XMStoreFloat3(&(box->Extents), XMVectorDivide(XMVectorSubtract(XMLoadFloat3(&maxSize), XMLoadFloat3(&minSize)), XMVectorSet(2.0f, 2.0f, 2.0f, 0.0f)));
 }
 
 void GameEntity::SetWorldMatrix(XMFLOAT4X4 pWorldMatrix) {

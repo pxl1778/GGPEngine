@@ -41,6 +41,8 @@ private:
 	void LoadShaders(); 
 	void CreateMatrices();
 	void CreateBasicGeometry();
+	
+	void TestInteraction(int pMouseX, int pMouseY);
 	void CreateUIButtons();
 
 	// Render helper methods
@@ -73,8 +75,11 @@ private:
 	Mesh* m6;
 	Mesh* Box;
 
+	std::vector<Mesh*> rayMeshes;
+
 	//Materials
 	Material* mat1;
+	Material* debugMat;
 	Material* SkyBoxMat;
 
 	//Texture Stuff
@@ -85,8 +90,11 @@ private:
 
 	ID3D11RasterizerState* skyBoxRastState;
 	ID3D11DepthStencilState* skyBoxDepthState;
+
 	//Entities
 	std::vector<GameEntity*> gameEntities;
+	std::vector<GameEntity*> debugCubes;
+	std::vector<GameEntity*> rayEntities;
 
 	//Camera
 	Camera* cam;
@@ -101,6 +109,8 @@ private:
 
 	// UI Button
 	UIButton* feedButton;
+
+	bool debugMode = false;
 
 	// Refraction-related variables
 	ID3D11SamplerState* refractSampler;
