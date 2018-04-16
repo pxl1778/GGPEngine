@@ -15,13 +15,13 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	//create materials
 	bodyMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), bodyTxt, blankNormal, sampler);
 	bodyMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	bodyMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+	bodyMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
 	eyeMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt, blankNormal, sampler);
 	eyeMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+	eyeMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
 	tentacleMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), tentacleTxt, blankNormal, sampler);
 	tentacleMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	tentacleMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+	tentacleMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
 
 	//create meshes
 	abominationBody = new Mesh("../Assets/Models/abomination1/body.obj", device);
@@ -114,7 +114,7 @@ void Creature::Update(float deltaTime, float totalTime)
 		isFeedingDuration += deltaTime;
 
 		// reset appropriate variables if we are done feeding
-		if (isFeedingDuration > 3.0f) {
+		if (isFeedingDuration > 6.28f) {
 			isFeeding = false;
 			isFeedingDuration = 0;
 		}

@@ -58,13 +58,13 @@ Game::~Game()
 	delete m4;
 	delete m5; 
 	delete m6;
-	delete Box;
+	//delete Box;
 
 	delete SkyBoxPixelShader;
 	delete SkyBoxVertexShader;
 
 	delete mat1;
-	delete SkyBoxMat;
+	//delete SkyBoxMat;
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
@@ -90,7 +90,7 @@ Game::~Game()
 
 	delete refractionEntity;
 	delete refractionMat;
-	delete refractionNormalMap;
+	refractionNormalMap->Release();
 }
 
 // --------------------------------------------------------
