@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DXCore.h"
 #include "Vertex.h"
 #include <DirectXMath.h>
 #include <vector>
