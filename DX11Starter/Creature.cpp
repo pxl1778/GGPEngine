@@ -44,17 +44,14 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	//1 body
 	gameEntities.push_back(new GameEntity(abominationBody, bodyMat, "body"));
 	//3 eyes
-<<<<<<< HEAD
-	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral));
-	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral));
-	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral));
+
+
 	//gameEntities[1]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
-=======
-	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat, "eye1"));
-	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat, "eye2"));
-	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat, "eye3"));
-	gameEntities[1]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
->>>>>>> master
+	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral, "eye1"));
+	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral, "eye2"));
+	gameEntities.push_back(new GameEntity(abominationEyeball, eyeMat_neutral, "eye3"));
+	//gameEntities[1]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
+
 	gameEntities[2]->Translate(XMFLOAT3(-1.1f, .4f, -.8f));
 	gameEntities[2]->Scale(XMFLOAT3(.7f, .7f, .7f));
 	//gameEntities[2]->Rotate(XMFLOAT3(0, -XM_PI / 4, 0));
@@ -259,13 +256,12 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 
 
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-<<<<<<< HEAD
-=======
+
 		
 		(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("SkyTexture", skyBoxTexture);
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
->>>>>>> master
+
 		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &color, sizeof(XMFLOAT4));
 		(*it)->Draw(context, cam);
 	}

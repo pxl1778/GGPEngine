@@ -658,6 +658,7 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y)
 
 	// We don't care about the tracking the cursor outside
 	// the window anymore (we're not dragging if the mouse is up)
+	guy->guyState = Neutral;
 	ReleaseCapture();
 }
 
@@ -720,8 +721,8 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 		XMStoreFloat3(&debugOrigin2, XMLoadFloat3(&rayOriginF) - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
 		XMStoreFloat3(&debugEnd1, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin1));
 		XMStoreFloat3(&debugEnd2, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin2));*/
-		XMStoreFloat3(&debugOrigin1, newOrigin + (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
-		XMStoreFloat3(&debugOrigin2, newOrigin - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugOrigin1, newOrigin + (cam->GetUpVector(XMFLOAT3(0.0f, 0.0f, 0.0f))*.1));
+		XMStoreFloat3(&debugOrigin2, newOrigin - (cam->GetUpVector(XMFLOAT3(0.0f, 0.0f, 0.0f))*.1));
 		XMStoreFloat3(&debugEnd1, (newDirection * 100) + XMLoadFloat3(&debugOrigin1));
 		XMStoreFloat3(&debugEnd2, (newDirection * 100) + XMLoadFloat3(&debugOrigin2));
 		Vertex vertices[] =
@@ -753,10 +754,18 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 	}
 	if (closestEntity == nullptr) {
 		//std::cout << "No hit\n";
-		guy->guyState = Angry;
+		guy->guyState = Neutral;
 	}
 	else {
-		guy->guyState = Happy;
+		
+		//check if clicking body
+		if (closestEntity->GetName().compare("body") == 0) {
+			guy->guyState = Happy;
+		}
+		//check if clicking tentacles
+		else if (closestEntity->GetName().find("tentacle") != std::string::npos) {
+			guy->guyState = Angry;
+		}
 	}
 }
 #pragma endregion
