@@ -13,7 +13,7 @@ public:
 	~UIButton();
 
 	void LoadShaders(ID3D11Device* device, ID3D11DeviceContext* context, std::string VS_FileName, std::string PS_FileName);
-	void Draw(ID3D11DeviceContext* context, DirectX::XMFLOAT4X4 projectionMat);
+	void Draw(ID3D11DeviceContext* context, DirectX::XMFLOAT4X4 projectionMat, DirectX::XMFLOAT4X4 viewMat);
 
 	ID3D11Buffer* GetVertexBuffer();
 	ID3D11Buffer* GetIndexBuffer();

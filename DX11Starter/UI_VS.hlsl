@@ -8,7 +8,7 @@
 cbuffer externalData : register(b0)
 {
 	//matrix world;
-	//matrix view;
+	matrix view;
 	matrix projection;
 };
 
@@ -70,6 +70,7 @@ VertexToPixel main( VertexShaderInput input )
 	//
 	// The result is essentially the position (XY) of the vertex on our 2D 
 	// screen and the distance (Z) from the camera (the "depth" of the pixel)
+	//matrix viewProj = mul(view, projection);
 	output.position = mul(float4(input.position, 1.0f), projection);
 
 	// Pass the color through 
