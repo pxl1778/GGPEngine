@@ -45,13 +45,18 @@ private:
 	void TestInteraction(int pMouseX, int pMouseY);
 	void CreateUIButtons();
 
+	// Render helper methods
+	void DrawScene();
+	void DrawSky();
+	void DrawRefraction();
+	void DrawFullscreenQuad(ID3D11ShaderResourceView* texture);
+
 	// Wrappers for DirectX shaders to provide simplified functionality
 	SimpleVertexShader* vertexShader;
 	SimpleVertexShader* SkyBoxVertexShader;
 	SimplePixelShader* pixelShader;
 	SimplePixelShader* SkyBoxPixelShader;
 	
-
 	// The matrices to go from model space to screen space
 	DirectX::XMFLOAT4X4 worldMatrix;
 	DirectX::XMFLOAT4X4 viewMatrix;
@@ -72,19 +77,16 @@ private:
 
 	std::vector<Mesh*> rayMeshes;
 
-	
-
 	//Materials
 	Material* mat1;
 	Material* debugMat;
-	
+	Material* SkyBoxMat;
 
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
 	ID3D11ShaderResourceView* wallNormal;
 	ID3D11ShaderResourceView* skyBoxSRV;
 	ID3D11SamplerState* sampler;
-
 
 	ID3D11RasterizerState* skyBoxRastState;
 	ID3D11DepthStencilState* skyBoxDepthState;
@@ -102,7 +104,6 @@ private:
 	DirectionalLight dLight2;
 	PointLight pLight1;
 
-
 	//main character
 	Creature* guy;
 
@@ -111,5 +112,17 @@ private:
 
 	bool debugMode = false;
 
+	// Refraction-related variables
+	ID3D11SamplerState* refractSampler;
+	ID3D11RenderTargetView* refractionRTV;
+	ID3D11ShaderResourceView* refractionSRV;
+	SimpleVertexShader* refractVS;
+	SimplePixelShader* refractPS;
+	SimpleVertexShader* quadVS;
+	SimplePixelShader* quadPS;
+
+	GameEntity* refractionEntity;
+	Material* refractionMat;
+	ID3D11ShaderResourceView* refractionNormalMap;
 };
 
