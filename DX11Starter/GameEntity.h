@@ -36,7 +36,6 @@ public:
 	void PrepareMaterial(DirectX::XMFLOAT4X4 pView, DirectX::XMFLOAT4X4 pProjection, DirectX::XMFLOAT3 pCamPosition);
 private:
 	Mesh* meshPointer;
-	Mesh* debugBox;
 	Material* material;
 	DirectX::XMFLOAT4X4 worldMatrix;
 	DirectX::XMFLOAT3 position;

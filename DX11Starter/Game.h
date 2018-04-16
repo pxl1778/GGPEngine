@@ -73,7 +73,6 @@ private:
 	Mesh* m4;
 	Mesh* m5;
 	Mesh* m6;
-	Mesh* Box;
 
 	std::vector<Mesh*> rayMeshes;
 

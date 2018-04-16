@@ -49,6 +49,7 @@ Game::~Game()
 	wallNormal->Release();
 	skyBoxRastState->Release();
 	skyBoxDepthState->Release();
+	skyBoxSRV->Release();
 
 	delete vertexShader;
 	delete pixelShader;
@@ -125,9 +126,6 @@ void Game::Init()
 	CreateMatrices();
 	CreateBasicGeometry();
 	
-
-	
-
 	// Create a sampler state that holds options for sampling
 	// The descriptions should always just be local variables	
 
@@ -222,9 +220,6 @@ void Game::LoadShaders()
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
 
-
-	
-
 	// Load the sky box from a DDS file
 	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
 
@@ -246,14 +241,8 @@ void Game::LoadShaders()
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
-
-	
-
 	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
 	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
-
-
-	//mat1->GetPixelShader()->SetShaderResourceView("");
 
 	// UI button shader
 	feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");

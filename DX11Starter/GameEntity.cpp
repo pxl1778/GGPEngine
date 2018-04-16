@@ -14,28 +14,12 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial, std::string pNam
 	box->Center = position;
 	box->Extents = meshPointer->getExtents();
 	name = pName;
-
-	//load in cube because it's 1x1x1, multiply scale by extents
-
-	/*Vertex vertices[] =
-	{
-		{ XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT3(-0.5f, -0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT3(+0.5f, -0.5f, +0.5f) },
-		{ XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT3(-0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(-0.5f, +0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, +0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-	};
-	unsigned indices[] = { 0, 2, 1, 1, 2, 3, };
-
-	debugBox = new Mesh(vertices, 4, indices, 6, device);*/
 }
 
 
 GameEntity::~GameEntity()
 {
+	delete box;
 }
 
 Mesh* GameEntity::GetMesh() {
