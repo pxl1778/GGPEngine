@@ -43,7 +43,9 @@ bld/
 [Oo]bj/
 [Ll]og/
 
-!Assets/
+!Assets/*
+!*Assets/
+!Assets/Models/*.obj
 !SpriteFont/
 
 # Visual Studio 2015/2017 cache/options directory
