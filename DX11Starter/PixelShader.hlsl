@@ -95,5 +95,5 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	return float4(final, 1);
 	
-	return surfaceColor * finalColor * input.color;
+	//return surfaceColor * finalColor * input.color;
 }

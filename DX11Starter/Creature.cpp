@@ -18,7 +18,7 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	bodyMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
 	eyeMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt, blankNormal, sampler);
 	eyeMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
+	eyeMat->GetPixelShader()->LoadShaderFile(L"ToonEyesPixelShader.cso");
 	tentacleMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), tentacleTxt, blankNormal, sampler);
 	tentacleMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	tentacleMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
