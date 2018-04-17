@@ -22,11 +22,11 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 
 	eyeMat_neutral = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_neutral, blankNormal, sampler);
 	eyeMat_neutral->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat_neutral->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
+	eyeMat_neutral->GetPixelShader()->LoadShaderFile(L"ToonEyesPixelShader.cso");
 
 	eyeMat_angry = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_angry, blankNormal, sampler);
 	eyeMat_angry->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat_angry->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
+	eyeMat_angry->GetPixelShader()->LoadShaderFile(L"ToonEyesPixelShader.cso");
 
 	eyeMat_closed = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_closed, blankNormal, sampler);
 	eyeMat_closed->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
