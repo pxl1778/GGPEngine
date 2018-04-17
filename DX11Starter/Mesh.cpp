@@ -346,6 +346,8 @@ Mesh::~Mesh()
 	//Gotta release those DX11 things!
 	if (vertexBuffer) { vertexBuffer->Release(); }
 	if (indexBuffer) { indexBuffer->Release(); }
+	delete vertices;
+	delete indicesPointer;
 }
 
 bool Mesh::TestPick(XMVECTOR pOrigin, XMVECTOR pDirection) {

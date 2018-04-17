@@ -44,24 +44,26 @@ Game::~Game()
 {
 	// Delete our simple shader objects, which
 	// will clean up their own internal DirectX stuff
+
 	sampler->Release();
 	wallTexture->Release();
 	wallNormal->Release();
 	skyBoxRastState->Release();
 	skyBoxDepthState->Release();
+	skyBoxSRV->Release();
 
 	delete vertexShader;
 	delete pixelShader;
+	delete SkyBoxPixelShader;
+	delete SkyBoxVertexShader;
 
 	delete m1;
 	delete m2;
 	delete m3;
 	delete m4;
 	delete m5; 
-	delete m6;
+	delete m6;	
 
-	delete SkyBoxPixelShader;
-	delete SkyBoxVertexShader;
 
 	delete mat1;
 	delete debugMat;
@@ -70,7 +72,14 @@ Game::~Game()
 		delete gameEntities.back();
 		gameEntities.pop_back();
 	}
-	gameEntities.clear();
+	gameEntities.clear();	
+
+	alphaPostRTV->Release();
+	alphaPostSRV->Release();	
+	delete alphaPostVertexShader;
+	delete alphaPostPixelShader;
+
+	
 
 	while (!debugCubes.empty()) {
 		delete debugCubes.back();
@@ -89,9 +98,8 @@ Game::~Game()
 		rayMeshes.pop_back();
 	}
 	rayMeshes.clear();
-
+	
 	delete cam;
-
 	delete guy;
 
 	// delete UI feed button
@@ -123,14 +131,12 @@ void Game::Init()
 	CreateUIButtons();
 	LoadShaders();
 	CreateMatrices();
-	CreateBasicGeometry();
-	
-
-	
+	CreateBasicGeometry();	
 
 	// Create a sampler state that holds options for sampling
 	// The descriptions should always just be local variables	
 
+	//Set skybox features
 	D3D11_RASTERIZER_DESC rasterDesc = {};
 	rasterDesc.FillMode = D3D11_FILL_SOLID;
 	rasterDesc.CullMode = D3D11_CULL_FRONT;
@@ -141,6 +147,48 @@ void Game::Init()
 	depthScript.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
 	depthScript.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 	device->CreateDepthStencilState(&depthScript, &skyBoxDepthState);
+
+
+	//set Post-process effects
+	//Alpha pass
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = width;
+	textureDesc.Height = height;
+	textureDesc.ArraySize = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.MipLevels = 1;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	ID3D11Texture2D* ppTexture;
+	device->CreateTexture2D(&textureDesc, 0, &ppTexture);
+
+	// Create the Render Target View
+	D3D11_RENDER_TARGET_VIEW_DESC JPrtvDesc = {};
+	JPrtvDesc.Format = textureDesc.Format;
+	JPrtvDesc.Texture2D.MipSlice = 0;
+	JPrtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+	device->CreateRenderTargetView(ppTexture, &JPrtvDesc, &alphaPostRTV);
+
+	// Create the Shader Resource View
+	D3D11_SHADER_RESOURCE_VIEW_DESC JPsrvDesc = {};
+	JPsrvDesc.Format = textureDesc.Format;
+	JPsrvDesc.Texture2D.MipLevels = 1;
+	JPsrvDesc.Texture2D.MostDetailedMip = 0;
+	JPsrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+
+	device->CreateShaderResourceView(ppTexture, &JPsrvDesc, &alphaPostSRV);
+
+	// We don't need the texture reference itself no mo'
+	ppTexture->Release();
+
+
+
 
 	// Refraction setup ------------------------
 	ID3D11Texture2D* refractionRenderTexture;
@@ -194,6 +242,7 @@ void Game::Init()
 	// Ask DirectX for the actual object
 	device->CreateSamplerState(&rSamp, &refractSampler);
 
+
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
@@ -222,9 +271,6 @@ void Game::LoadShaders()
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
 
-
-	
-
 	// Load the sky box from a DDS file
 	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
 
@@ -244,13 +290,18 @@ void Game::LoadShaders()
 	debugMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+
+	//skybox loading
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
-
-	
-
 	SkyBoxVertexShader->LoadShaderFile(L"SkyBoxVertexShader.cso");
 	SkyBoxPixelShader->LoadShaderFile(L"SkyBoxPixelShader.cso");
+
+	//Post Process Loading
+	alphaPostVertexShader = new SimpleVertexShader(device, context);
+	alphaPostPixelShader = new SimplePixelShader(device, context);
+	alphaPostVertexShader->LoadShaderFile(L"BlurVertexShader.cso");
+	alphaPostPixelShader->LoadShaderFile(L"BlurPixelShader.cso");
 
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
@@ -309,6 +360,7 @@ void Game::CreateBasicGeometry()
 	m4 = new Mesh("../Assets/Models/cube.obj", device);
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
+
 
 	// Set up the refraction entity (the object that refracts)
 	refractionEntity = new GameEntity(m1, refractionMat, "refractionBall"); 
@@ -459,13 +511,10 @@ void Game::Update(float deltaTime, float totalTime)
 		}
 	}
 
-
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
 	}
 
-
-	//cam->Update(deltaTime);
 	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
 
@@ -485,17 +534,30 @@ void Game::Draw(float deltaTime, float totalTime)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
 	context->ClearRenderTargetView(backBufferRTV, color);
+
+	context->ClearRenderTargetView(alphaPostRTV, color);
+
 	context->ClearRenderTargetView(refractionRTV, color);
+
 	context->ClearDepthStencilView(
 		depthStencilView,
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
 
+
+	context->OMSetRenderTargets(1, &alphaPostRTV, depthStencilView);
+
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+	
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
+	//guy->Draw(context, cam);
+
+
 	// Use our refraction render target and our regular depth buffer
 	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
 
-	XMFLOAT4 white = XMFLOAT4(1.0, 1.0, 1.0, 1.0);
+
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
@@ -531,10 +593,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Draw Feed Button
 	feedButton->Draw(context, cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
-	// Render the sky (after all opaque geometry)
-	/*UINT stride = sizeof(Vertex);
-	UINT offset = 0;
 
+	// Render the sky (after all opaque geometry)
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	/*
 
 	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
 	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
@@ -583,6 +646,53 @@ void Game::Draw(float deltaTime, float totalTime)
 	// that we intend to sample from on the next frame
 	ID3D11ShaderResourceView* nullSRV[16] = {};
 	context->PSSetShaderResources(0, 16, nullSRV);
+
+	//Switch to post Process mode
+	//First Pass
+	int left = 0, right = 1, down = 0, up = 1;
+	if (GetAsyncKeyState('Q') & 0x8000) {
+		down = -5;
+	}
+	if (GetAsyncKeyState('E') & 0x8000) {
+		up = 5;
+	}
+	if (GetAsyncKeyState('A') & 0x8000) {
+		right = 5;
+	}
+	if (GetAsyncKeyState('D') & 0x8000) {
+		left = -5;
+	}
+
+
+
+
+	//set rendering to back buffer(so stuff actually draws)
+	context->OMSetRenderTargets(1, &backBufferRTV, 0);
+	//set shaders and associated resources
+	alphaPostVertexShader->SetShader();
+	alphaPostPixelShader->SetShader();
+	alphaPostPixelShader->SetShaderResourceView("Pixels", alphaPostSRV);
+	alphaPostPixelShader->SetSamplerState("Sampler", sampler);
+	alphaPostPixelShader->SetInt("Bleft", left);
+	alphaPostPixelShader->SetInt("Bright", right);
+	alphaPostPixelShader->SetInt("Bup", up);
+	alphaPostPixelShader->SetInt("Bdown", down);
+
+	alphaPostPixelShader->SetFloat("pixelWidth", 1.0f / width);
+	alphaPostPixelShader->SetFloat("pixelHeight", 1.0f / height);
+	alphaPostPixelShader->CopyAllBufferData();
+
+	// Unbind vert/index buffers
+	ID3D11Buffer* nothing = 0;
+	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw a triangle that will hopefully fill the screen
+	context->Draw(3, 0);
+
+	// Unbind this particular register
+	alphaPostPixelShader->SetShaderResourceView("Pixels", 0);
+
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -658,6 +768,7 @@ void Game::OnMouseUp(WPARAM buttonState, int x, int y)
 
 	// We don't care about the tracking the cursor outside
 	// the window anymore (we're not dragging if the mouse is up)
+	guy->guyState = Neutral;
 	ReleaseCapture();
 }
 
@@ -720,8 +831,8 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 		XMStoreFloat3(&debugOrigin2, XMLoadFloat3(&rayOriginF) - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
 		XMStoreFloat3(&debugEnd1, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin1));
 		XMStoreFloat3(&debugEnd2, (XMLoadFloat3(&rayDirectionF) * 100) + XMLoadFloat3(&debugOrigin2));*/
-		XMStoreFloat3(&debugOrigin1, newOrigin + (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
-		XMStoreFloat3(&debugOrigin2, newOrigin - (cam->GetUpVector(XMFLOAT3(0, 0, 0))*.1));
+		XMStoreFloat3(&debugOrigin1, newOrigin + (cam->GetUpVector(XMFLOAT3(0.0f, 0.0f, 0.0f))*.1f));
+		XMStoreFloat3(&debugOrigin2, newOrigin - (cam->GetUpVector(XMFLOAT3(0.0f, 0.0f, 0.0f))*.1f));
 		XMStoreFloat3(&debugEnd1, (newDirection * 100) + XMLoadFloat3(&debugOrigin1));
 		XMStoreFloat3(&debugEnd2, (newDirection * 100) + XMLoadFloat3(&debugOrigin2));
 		Vertex vertices[] =
@@ -753,10 +864,18 @@ void Game::TestInteraction(int pMouseX, int pMouseY) {
 	}
 	if (closestEntity == nullptr) {
 		//std::cout << "No hit\n";
-		guy->guyState = Angry;
+		guy->guyState = Neutral;
 	}
 	else {
-		guy->guyState = Happy;
+		
+		//check if clicking body
+		if (closestEntity->GetName().compare("body") == 0) {
+			guy->guyState = Happy;
+		}
+		//check if clicking tentacles
+		else if (closestEntity->GetName().find("tentacle") != std::string::npos) {
+			guy->guyState = Angry;
+		}
 	}
 }
 #pragma endregion
