@@ -271,7 +271,7 @@ void Game::LoadShaders()
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
 
 	// Load the sky box from a DDS file
-	CreateDDSTextureFromFile(device, L"../Assets/Textures/BackgroundPlaceholder.dds", 0, &skyBoxSRV);
+	CreateDDSTextureFromFile(device, L"../Assets/Textures/Skybox/Skybox3.dds", 0, &skyBoxSRV);
 
 	D3D11_SAMPLER_DESC sd = {};
 	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -572,7 +572,7 @@ void Game::Draw(float deltaTime, float totalTime)
 			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
-			//(*it)->Draw(context, cam);
+			(*it)->Draw(context, cam);
 		}
 		for (std::vector<GameEntity*>::iterator it = rayEntities.begin(); it != rayEntities.end(); ++it) {
 			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));

@@ -64,7 +64,8 @@ float GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
 
 	XMStoreFloat3(&(box->Extents), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getExtents())), XMLoadFloat3(&scale)));
 	XMStoreFloat3(&(box->Center), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getCenter())), XMLoadFloat3(&scale)));
-	XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(box->Center)), XMMatrixRotationRollPitchYaw(rotation.x, -rotation.y, rotation.z)));
+	box->Center.z *= -1;
+	XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(box->Center)), XMMatrixRotationRollPitchYaw(rotation.z, rotation.y, rotation.x)));//bounding box rotates around the y axis the wrong way as the meshes...
 	XMStoreFloat3(&(box->Center), XMVectorAdd(XMLoadFloat3(&(box->Center)), XMLoadFloat3(&position)));
 
 	//XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(meshPointer->getCenter())), XMMatrixTranspose(XMLoadFloat4x4(&worldMatrix))));
