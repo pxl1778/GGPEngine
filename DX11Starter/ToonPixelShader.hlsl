@@ -42,6 +42,7 @@ cbuffer externalData : register(b0) {
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
+TextureCube SkyTexture	: register(t2);
 SamplerState Sampler : register(s0);
 
 // --------------------------------------------------------
@@ -84,5 +85,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	//diffuse
 	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
+
 	return surfaceColor * finalColor * input.color;
 }

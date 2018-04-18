@@ -68,8 +68,12 @@ float4 main(VertexToPixel input) : SV_TARGET
 	input.normal = normalize(finalNormal);
 
 	//lights
-	float dNdotL1 = saturate(dot(input.normal, -dLight1.Direction));
+	float dNdotL1 = round( saturate(dot(input.normal, -dLight1.Direction)));
 	//float dNdotL2 = saturate(dot(input.normal, -dLight2.Direction));
+	//clamp shadow to one of two binary values, giving hard toon shade
+	//dNdotL1 = .5 + clamp(floor(dNdotL1), -1, 0);
+	//if (dNdotL1 < .5) { dNdotL1 = .1; }
+	//else { dNdotL1 = 1; }
 
 	//float3 dirToPLight1 = normalize(pLight1.Position - input.worldPos);
 	//float pNdotL1 = saturate(dot(input.normal, dirToPLight1));
@@ -82,7 +86,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 	//diffuse
 	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
 
-	
 	// Skybox Reflection
 	// Get reflection vector of camera vector bouncing off this surface pixel
 	float3 reflectVector = reflect(-dirToCamera, input.normal);
@@ -94,6 +97,6 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 final = lerp(reflectColor, surfaceColor * finalColor * input.color, fakeFresnel);
 
 	return float4(final, 1);
-	
+
 	//return surfaceColor * finalColor * input.color;
 }

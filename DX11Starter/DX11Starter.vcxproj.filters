@@ -1,12 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <FxCompile Include="FullscreenQuadPS.hlsl" />
+    <FxCompile Include="FullscreenQuadVS.hlsl" />
     <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="RefractPS.hlsl" />
+    <FxCompile Include="RefractVS.hlsl" />
     <FxCompile Include="SkyBoxPixelShader.hlsl" />
     <FxCompile Include="SkyBoxVertexShader.hlsl" />
-    <FxCompile Include="VertexShader.hlsl" />
+    <FxCompile Include="ToonEyesPixelShader.hlsl" />
+    <FxCompile Include="ToonPixelShader.hlsl" />
     <FxCompile Include="UI_PS.hlsl" />
     <FxCompile Include="UI_VS.hlsl" />
+
+    <FxCompile Include="VertexShader.hlsl" />
+
     <FxCompile Include="RefractPS.hlsl" />
     <FxCompile Include="RefractVS.hlsl" />
     <FxCompile Include="FullscreenQuadPS.hlsl" />
@@ -14,6 +22,7 @@
     <FxCompile Include="ToonPixelShader.hlsl" />
     <FxCompile Include="BlurPixelShader.hlsl" />
     <FxCompile Include="BlurVertexShader.hlsl" />
+
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
@@ -38,8 +47,8 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="SimpleShader.h" />
-    <ClInclude Include="Vertex.h" />
     <ClInclude Include="UIButton.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\x64\SpriteFont\myfile.spritefont" />
