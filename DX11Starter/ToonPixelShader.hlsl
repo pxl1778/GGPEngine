@@ -14,6 +14,7 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;
 	float2 uv			: TEXCOORD0;
 	float3 worldPos		: TEXCOORD1;
+	float4 viewPos		: TEXCOORD2;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float4 color		: COLOR;
@@ -42,6 +43,8 @@ cbuffer externalData : register(b0) {
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
+TextureCube SkyTexture	: register(t2);
+Texture2D ProjectionTexture	: register(t3);
 SamplerState Sampler : register(s0);
 
 // --------------------------------------------------------
@@ -84,5 +87,20 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	//diffuse
 	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
+
+	//calculate projected texture coordinates
+	float2 projectionTexCoord;	
+	projectionTexCoord.x = input.viewPos.x / input.viewPos.w / 2.0f + .5f;
+	projectionTexCoord.y = input.viewPos.y / input.viewPos.w / 2.0f + .5f;
+	//check if coordinates are within the projection (in 0 to 1 range)
+	//http://www.rastertek.com/dx11tut43.html tutorial i'm using suggests branching; wondering if there's a way around that
+	if ((saturate(projectionTexCoord.x) == projectionTexCoord.x) && (saturate(projectionTexCoord.y) == projectionTexCoord.y)) {
+		//sample the color value of the projection
+		//use additive so it gets brighter like light
+		float4 projectionColor = ProjectionTexture.Sample(Sampler, projectionTexCoord);
+		surfaceColor += projectionColor;
+	}
+
+
 	return surfaceColor * finalColor * input.color;
 }
