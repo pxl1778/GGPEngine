@@ -166,7 +166,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//return to neutral state for anim 2
 				if (gameEntities[i]->GetRotation().x < 0) {
 					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, -.012, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
 
@@ -180,7 +180,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//anim 2- tentacles curl in defensively
 				if (gameEntities[i]->GetRotation().x > -XM_PIDIV4) {
 					gameEntities[i]->Rotate(XMFLOAT3(-2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, .006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, .012, 0));
 					//printf("%.2f", gameEntities[i]->GetRotation().x); printf("\n");
 					gameEntities[i]->MoveForward(-.002);
 				}
@@ -189,7 +189,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//return to neutral state for anim 2
 				if (gameEntities[i]->GetRotation().x < 0) {
 					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, -.012, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
 				//if (gameEntities[i]->GetRotation().x < XM_PI / 4) {

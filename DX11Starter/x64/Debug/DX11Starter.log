@@ -1,2 +1,9 @@
-﻿  Game.cpp
-  DX11Starter.vcxproj -> C:\Users\Joel\Desktop\GGP with Cassaroli\Group Project\x64\Debug\DX11Starter.exe
+﻿  Creature.cpp
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(85): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(169): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(170): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(183): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(185): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(192): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(193): warning C4305: 'argument': truncation from 'double' to 'float'
+  DX11Starter.vcxproj -> C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe
