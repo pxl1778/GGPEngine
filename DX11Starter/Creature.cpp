@@ -19,13 +19,14 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 	bodyMat->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	bodyMat->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
 
+
 	eyeMat_neutral = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_neutral, blankNormal, sampler);
 	eyeMat_neutral->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat_neutral->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
+	eyeMat_neutral->GetPixelShader()->LoadShaderFile(L"ToonEyesPixelShader.cso");
 
 	eyeMat_angry = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_angry, blankNormal, sampler);
 	eyeMat_angry->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat_angry->GetPixelShader()->LoadShaderFile(L"ToonPixelShader.cso");
+	eyeMat_angry->GetPixelShader()->LoadShaderFile(L"ToonEyesPixelShader.cso");
 
 	eyeMat_closed = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_closed, blankNormal, sampler);
 	eyeMat_closed->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
@@ -165,7 +166,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//return to neutral state for anim 2
 				if (gameEntities[i]->GetRotation().x < 0) {
 					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, -.012, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
 
@@ -179,7 +180,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//anim 2- tentacles curl in defensively
 				if (gameEntities[i]->GetRotation().x > -XM_PIDIV4) {
 					gameEntities[i]->Rotate(XMFLOAT3(-2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, .006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, .012, 0));
 					//printf("%.2f", gameEntities[i]->GetRotation().x); printf("\n");
 					gameEntities[i]->MoveForward(-.002);
 				}
@@ -188,7 +189,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//return to neutral state for anim 2
 				if (gameEntities[i]->GetRotation().x < 0) {
 					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, -.012, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
 				//if (gameEntities[i]->GetRotation().x < XM_PI / 4) {

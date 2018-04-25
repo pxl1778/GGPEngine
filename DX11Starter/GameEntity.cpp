@@ -16,29 +16,12 @@ GameEntity::GameEntity(Mesh* pMeshPointer, Material* pMaterial, std::string pNam
 	box->Center = position;
 	box->Extents = meshPointer->getExtents();
 	name = pName;
-
-	//load in cube because it's 1x1x1, multiply scale by extents
-
-	/*Vertex vertices[] =
-	{
-		{ XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-0.5f, -0.5f, +0.5f), XMFLOAT3(-0.5f, -0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, -0.5f, +0.5f), XMFLOAT3(+0.5f, -0.5f, +0.5f) },
-		{ XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(-0.5f, +0.5f, +0.5f), XMFLOAT3(-0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(-0.5f, +0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, +0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(-0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-		{ XMFLOAT3(+0.5f, -0.5f, -0.5f), XMFLOAT2(1.0f, 0.0f), XMFLOAT3(+0.5f, +0.5f, +0.5f), XMFLOAT3(+0.5f, +0.5f, +0.5f) },
-	};
-	unsigned indices[] = { 0, 2, 1, 1, 2, 3, };
-
-	debugBox = new Mesh(vertices, 4, indices, 6, device);*/
-
 }
 
 
 GameEntity::~GameEntity()
 {
+	delete box;
 }
 
 Mesh* GameEntity::GetMesh() {
@@ -81,7 +64,8 @@ float GameEntity::TestPick(XMFLOAT3 pOrigin, XMFLOAT3 pDirection) {
 
 	XMStoreFloat3(&(box->Extents), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getExtents())), XMLoadFloat3(&scale)));
 	XMStoreFloat3(&(box->Center), XMVectorMultiply(XMLoadFloat3(&(meshPointer->getCenter())), XMLoadFloat3(&scale)));
-	XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(box->Center)), XMMatrixRotationRollPitchYaw(rotation.x, -rotation.y, rotation.z)));
+	box->Center.z *= -1;
+	XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(box->Center)), XMMatrixRotationRollPitchYaw(rotation.z, rotation.y, rotation.x)));//bounding box rotates around the y axis the wrong way as the meshes...
 	XMStoreFloat3(&(box->Center), XMVectorAdd(XMLoadFloat3(&(box->Center)), XMLoadFloat3(&position)));
 
 	//XMStoreFloat3(&(box->Center), XMVector3Transform(XMLoadFloat3(&(meshPointer->getCenter())), XMMatrixTranspose(XMLoadFloat4x4(&worldMatrix))));
