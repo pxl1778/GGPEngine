@@ -1,4 +1,33 @@
-﻿  Creature.cpp
+﻿  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\BlurPixelShader.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\BlurVertexShader.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\FullscreenQuadPS.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\FullscreenQuadVS.cso
+C:\Users\Kat\Documents\GitHub\GGPEngine\DX11Starter\PixelShader.hlsl(94,17-88): warning X3206: 'lerp': implicit truncation of vector type
+  
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\PixelShader.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\RefractPS.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\RefractVS.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\SkyBoxPixelShader.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\SkyBoxVertexShader.cso
+C:\Users\Kat\Documents\GitHub\GGPEngine\DX11Starter\ToonEyesPixelShader.hlsl(99,17-88): warning X3206: 'lerp': implicit truncation of vector type
+C:\Users\Kat\Documents\GitHub\GGPEngine\DX11Starter\ToonEyesPixelShader.hlsl(111,3-26): warning X3206: implicit truncation of vector type
+  
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\ToonEyesPixelShader.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\ToonPixelShader.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\UI_PS.cso
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\UI_VS.cso
+C:\Users\Kat\Documents\GitHub\GGPEngine\DX11Starter\VertexShader.hlsl(106,27-52): warning X3206: 'mul': implicit truncation of vector type
+  
+  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\VertexShader.cso
+  UIButton.cpp
+  SimpleShader.cpp
+  Mesh.cpp
+  Material.cpp
+  Main.cpp
+  GameEntity.cpp
+  Game.cpp
+  DXCore.cpp
+  Creature.cpp
 c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(85): warning C4305: 'argument': truncation from 'double' to 'float'
 c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(169): warning C4305: 'argument': truncation from 'double' to 'float'
 c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(170): warning C4305: 'argument': truncation from 'double' to 'float'
@@ -6,4 +35,6 @@ c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(183): warning C
 c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(185): warning C4305: 'argument': truncation from 'double' to 'float'
 c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(192): warning C4305: 'argument': truncation from 'double' to 'float'
 c:\users\kat\documents\github\ggpengine\dx11starter\creature.cpp(193): warning C4305: 'argument': truncation from 'double' to 'float'
+  Camera.cpp
+  Generating Code...
   DX11Starter.vcxproj -> C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe
