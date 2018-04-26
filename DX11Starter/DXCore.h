@@ -15,6 +15,8 @@
 
 // Text Tutorial: https://github.com/Microsoft/DirectXTK/wiki/Drawing-text
 
+extern float globalTotalTime;
+
 class DXCore
 {
 public:

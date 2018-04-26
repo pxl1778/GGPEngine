@@ -2,8 +2,6 @@
 // For the DirectX Math library
 using namespace DirectX;
 
-
-
 Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11SamplerState* sampler)
 {
 	//loading textures

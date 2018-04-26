@@ -63,10 +63,11 @@ Game::~Game()
 	delete m4;
 	delete m5; 
 	delete m6;	
-
+	delete waterMesh;
 
 	delete mat1;
 	delete debugMat;
+	delete waterMat;
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
@@ -246,7 +247,7 @@ void Game::Init()
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(.4f, .3f, .9f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
+	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(0.0f, .95f, 1.0f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
 	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 
@@ -255,6 +256,11 @@ void Game::Init()
 	for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
 		debugCubes.push_back(new GameEntity(m4, debugMat, "debugcube"));
 	}
+
+	gameEntities.push_back(new GameEntity(waterMesh, waterMat, "water"));
+	gameEntities.back()->SetRotation(XMFLOAT3(XM_PI, 0, 0));
+	gameEntities.back()->Translate(XMFLOAT3(0, 20.0f, 0));
+	gameEntities.back()->Scale(XMFLOAT3(1.7f, 1.7f, 1.7f));
 
 }
 
@@ -289,6 +295,11 @@ void Game::LoadShaders()
 	debugMat->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
+
+	//Water Material
+	waterMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	waterMat->GetVertexShader()->LoadShaderFile(L"WaterVertexShader.cso");
+	waterMat->GetPixelShader()->LoadShaderFile(L"WaterPixelShader.cso");
 
 	//skybox loading
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
@@ -358,6 +369,7 @@ void Game::CreateBasicGeometry()
 	m4 = new Mesh("../Assets/Models/cube.obj", device);
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
+	waterMesh = new Mesh("../Assets/Models/50x50.obj", device);
 
 
 	// Set up the refraction entity (the object that refracts)

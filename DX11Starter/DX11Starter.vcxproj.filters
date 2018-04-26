@@ -12,9 +12,7 @@
     <FxCompile Include="ToonPixelShader.hlsl" />
     <FxCompile Include="UI_PS.hlsl" />
     <FxCompile Include="UI_VS.hlsl" />
-
     <FxCompile Include="VertexShader.hlsl" />
-
     <FxCompile Include="RefractPS.hlsl" />
     <FxCompile Include="RefractVS.hlsl" />
     <FxCompile Include="FullscreenQuadPS.hlsl" />
@@ -22,7 +20,8 @@
     <FxCompile Include="ToonPixelShader.hlsl" />
     <FxCompile Include="BlurPixelShader.hlsl" />
     <FxCompile Include="BlurVertexShader.hlsl" />
-
+    <FxCompile Include="WaterVertexShader.hlsl" />
+    <FxCompile Include="WaterPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />

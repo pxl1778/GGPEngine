@@ -82,6 +82,7 @@ private:
 	Mesh* m4;
 	Mesh* m5;
 	Mesh* m6;
+	Mesh* waterMesh;
 
 	std::vector<Mesh*> rayMeshes;
 
@@ -89,6 +90,7 @@ private:
 	Material* mat1;
 	Material* debugMat;
 	Material* SkyBoxMat;
+	Material* waterMat;
 
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
