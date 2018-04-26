@@ -202,11 +202,12 @@ void Creature::Update(float deltaTime, float totalTime)
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
+		(*it)->GetMaterial()->GetPixelShader()->SetData("Time", &totalTime, sizeof(float));
 	}
 }
 
 //for now draw method is hard coded to accept the right amount of lights in the scene; this will need to be changed if we change the lights
-void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture)
+void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture, Projection* caustics)
 {
 	//some colors to send to shader depending on guy's mood
 	XMFLOAT4 white = XMFLOAT4(1.00f, 1.0f, 1.0f, 1.0);
@@ -260,6 +261,10 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 
 		
 		(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("SkyTexture", skyBoxTexture);
+		(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("ProjectionTexture", caustics->projectionTexture);
+		(*it)->GetMaterial()->GetVertexShader()->SetMatrix4x4("causticView", caustics->viewMatrix);
+		(*it)->GetMaterial()->GetVertexShader()->SetMatrix4x4("causticProjection", caustics->projectionMatrix);
+		
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 

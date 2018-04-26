@@ -106,6 +106,8 @@ private:
 	DirectionalLight dLight1;
 	DirectionalLight dLight2;
 	PointLight pLight1;
+	Projection causticLights;
+
 
 	//main character
 	Creature* guy;

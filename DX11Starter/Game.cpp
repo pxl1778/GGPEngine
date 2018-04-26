@@ -117,6 +117,8 @@ Game::~Game()
 	delete refractionEntity;
 	delete refractionMat;
 	refractionNormalMap->Release();
+
+	//delete causticLights;
 }
 
 // --------------------------------------------------------
@@ -231,15 +233,31 @@ void Game::Init()
 	// that we don't wrap the refraction from the other
 	// side of the screen
 	D3D11_SAMPLER_DESC rSamp = {};
-	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	rSamp.Filter = D3D11_FILTER_ANISOTROPIC;
 	rSamp.MaxAnisotropy = 16;
 	rSamp.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Ask DirectX for the actual object
 	device->CreateSamplerState(&rSamp, &refractSampler);
+
+	//set up projection of caustic lights
+	causticLights = Projection({ XMFLOAT4X4(), XMFLOAT4X4(),nullptr });
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		.75f * 3.1415926535f,		// Field of View Angle
+		256/256,					// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&causticLights.projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+	XMFLOAT3 position = XMFLOAT3(0, 1, 0);
+	XMVECTOR forward = XMVectorSet(.01f, -1.0f, 0.0f, 0.0f);
+	XMVECTOR right = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(forward));
+	XMVECTOR up = XMVector3Cross(forward, right);
+	XMMATRIX newView = XMMatrixLookToLH(XMLoadFloat3(&position), XMVector3Normalize(forward), XMVector3Normalize(up));
+	XMStoreFloat4x4(&causticLights.viewMatrix, XMMatrixTranspose(newView));
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/caustic.png", 0, &causticLights.projectionTexture);
 
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -384,7 +402,7 @@ void Game::CreateUIButtons()
 
 void Game::DrawScene()
 {
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, &causticLights);
 }
 
 void Game::DrawSky()
@@ -548,7 +566,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
 	
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, &causticLights);
 	//guy->Draw(context, cam);
 
 

@@ -39,6 +39,7 @@ cbuffer externalData : register(b0) {
 	//DirectionalLight dLight2;
 	//PointLight pLight1;
 	float3 CameraPosition;
+	float Time;
 };
 
 Texture2D DiffuseTexture : register(t0);
@@ -100,16 +101,22 @@ float4 main(VertexToPixel input) : SV_TARGET
 
 	//calculate projected texture coordinates
 	float2 projectionTexCoord;
-	projectionTexCoord.x = input.viewPos.x / input.viewPos.w / 2.0f + .5f;
-	projectionTexCoord.y = input.viewPos.y / input.viewPos.w / 2.0f + .5f;
+	float2 projectionTexCoord2;
+	float speed = .1f;
+	projectionTexCoord.x = (input.viewPos.x / input.viewPos.w / 2.0f + .5f) + (Time*speed);
+	projectionTexCoord.y = (input.viewPos.y / input.viewPos.w / 2.0f + .5f) + (Time*speed);
+	projectionTexCoord2.x = (-input.viewPos.x / input.viewPos.w / 2.0f + .5f) + (Time*speed);
+	projectionTexCoord2.y = (-input.viewPos.y / input.viewPos.w / 2.0f + .5f) + (0 * speed);
 	//check if coordinates are within the projection (in 0 to 1 range)
-	//http://www.rastertek.com/dx11tut43.html tutorial i'm using suggests branching; wondering if there's a way around that
-	if ((saturate(projectionTexCoord.x) == projectionTexCoord.x) && (saturate(projectionTexCoord.y) == projectionTexCoord.y)) {
-		//sample the color value of the projection
-		//use additive so it gets brighter like light
-		float4 projectionColor = ProjectionTexture.Sample(Sampler, projectionTexCoord);
-		final += projectionColor;
-	}
+	//http://www.rastertek.com/dx11tut43.html tutorial i'm using 
+	
+	//sample the color value of the projection
+	//use additive so it gets brighter like light
+	float4 projectionColor = ProjectionTexture.Sample(Sampler, projectionTexCoord);
+	float4 projectionColor2 = ProjectionTexture.Sample(Sampler, projectionTexCoord2);
+	surfaceColor += (projectionColor / 2);
+	surfaceColor += (projectionColor2 / 2);
+	
 
 	return float4(final, 1);
 
