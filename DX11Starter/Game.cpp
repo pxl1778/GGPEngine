@@ -122,7 +122,10 @@ Game::~Game()
 
 	//clean up particle stuff
 	bubbleTxt->Release();
+	heartTxt->Release();
 	delete bubbleEmitter;
+	delete bubbleEmitter2;
+	delete heartEmitter;
 	delete particlePS;
 	delete particleVS;
 	particleDepthState->Release();
@@ -271,6 +274,7 @@ void Game::Init()
 	//particle setup--------------------------------------------------------
 	//load texture
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/bubble.png", 0, &bubbleTxt);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/heart.png", 0, &heartTxt);
 
 	//depth state for particles
 	D3D11_DEPTH_STENCIL_DESC pDesc = {};
@@ -309,6 +313,38 @@ void Game::Init()
 		particleVS,
 		particlePS,
 		bubbleTxt);
+
+	bubbleEmitter2 = new Emitter(
+		11,							// Max particles
+		.8f,							// Particles per second
+		20,								// Particle lifetime
+		0.1f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, .5f),	// Start color
+		XMFLOAT4(.7f, 1, 0.7f, 0),		// End color
+		XMFLOAT3(0, .15f, 0),				// Start velocity
+		XMFLOAT3(-4, -2.5f, 0),				// Start position
+		XMFLOAT3(0, .1f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		bubbleTxt);
+
+	heartEmitter = new Emitter(
+		5,							// Max particles
+		1.0f,							// Particles per second
+		3,								// Particle lifetime
+		1.0f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, 1),	// Start color
+		XMFLOAT4(1,1,1,.5),		// End color
+		XMFLOAT3(0, .3f, 0),				// Start velocity
+		XMFLOAT3(0, 4.5, 0),				// Start position
+		XMFLOAT3(0, 1.0f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		heartTxt);
 
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -594,6 +630,8 @@ void Game::Update(float deltaTime, float totalTime)
 	refractionEntity->CalculateWorldMatrix();
 
 	bubbleEmitter->Update(deltaTime);
+	bubbleEmitter2->Update(deltaTime);
+	if (guy->guyState == Happy) { heartEmitter->Update(deltaTime); }
 }
 
 // --------------------------------------------------------
@@ -768,6 +806,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	alphaPostPixelShader->SetShaderResourceView("Pixels", 0);
 
 	bubbleEmitter->Draw(context, cam);
+	bubbleEmitter2->Draw(context, cam);
+	if (guy->guyState == Happy) { heartEmitter->Draw(context, cam); }
 
 
 	// Present the back buffer to the user
