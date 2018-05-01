@@ -11,6 +11,7 @@
 #include <vector>
 #include "Creature.h"
 #include "UIButton.h"
+#include "Emitter.h"
 
 
 class Game 
@@ -106,7 +107,7 @@ private:
 	DirectionalLight dLight1;
 	DirectionalLight dLight2;
 	PointLight pLight1;
-	Projection causticLights;
+	Projection* causticLights;
 
 
 	//main character
@@ -129,5 +130,16 @@ private:
 	GameEntity* refractionEntity;
 	Material* refractionMat;
 	ID3D11ShaderResourceView* refractionNormalMap;
+
+	//bubble particle stuff
+	ID3D11ShaderResourceView* bubbleTxt;
+	ID3D11ShaderResourceView* heartTxt;
+	Emitter* bubbleEmitter;
+	Emitter* bubbleEmitter2;
+	Emitter* heartEmitter;
+	SimpleVertexShader* particleVS;
+	SimplePixelShader* particlePS;
+	ID3D11DepthStencilState* particleDepthState;
+	ID3D11BlendState* particleBlendState;
 };
 

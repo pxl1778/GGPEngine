@@ -1,5 +1,2 @@
-﻿C:\Users\Kat\Documents\GitHub\GGPEngine\DX11Starter\ToonEyesPixelShader.hlsl(100,17-88): warning X3206: 'lerp': implicit truncation of vector type
-  
-  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\ToonEyesPixelShader.cso
-  compilation object save succeeded; see C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\ToonPixelShader.cso
+﻿  Game.cpp
   DX11Starter.vcxproj -> C:\Users\Kat\Documents\GitHub\GGPEngine\x64\Debug\DX11Starter.exe

@@ -20,6 +20,8 @@
     <FxCompile Include="ToonPixelShader.hlsl" />
     <FxCompile Include="BlurPixelShader.hlsl" />
     <FxCompile Include="BlurVertexShader.hlsl" />
+    <FxCompile Include="ParticleVS.hlsl" />
+    <FxCompile Include="ParticlePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
@@ -32,6 +34,7 @@
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="SimpleShader.cpp" />
     <ClCompile Include="UIButton.cpp" />
+    <ClCompile Include="Emitter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -46,6 +49,7 @@
     <ClInclude Include="SimpleShader.h" />
     <ClInclude Include="UIButton.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Emitter.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\x64\SpriteFont\myfile.spritefont" />
