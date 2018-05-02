@@ -1,8 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <FxCompile Include="BlurPixelShader.hlsl" />
+    <FxCompile Include="BlurVertexShader.hlsl" />
     <FxCompile Include="FullscreenQuadPS.hlsl" />
     <FxCompile Include="FullscreenQuadVS.hlsl" />
+    <FxCompile Include="ParticlePS.hlsl" />
+    <FxCompile Include="ParticleVS.hlsl" />
     <FxCompile Include="PixelShader.hlsl" />
     <FxCompile Include="RefractPS.hlsl" />
     <FxCompile Include="RefractVS.hlsl" />
@@ -13,20 +17,14 @@
     <FxCompile Include="UI_PS.hlsl" />
     <FxCompile Include="UI_VS.hlsl" />
     <FxCompile Include="VertexShader.hlsl" />
-    <FxCompile Include="RefractPS.hlsl" />
-    <FxCompile Include="RefractVS.hlsl" />
-    <FxCompile Include="FullscreenQuadPS.hlsl" />
-    <FxCompile Include="FullscreenQuadVS.hlsl" />
-    <FxCompile Include="ToonPixelShader.hlsl" />
-    <FxCompile Include="BlurPixelShader.hlsl" />
-    <FxCompile Include="BlurVertexShader.hlsl" />
-    <FxCompile Include="WaterVertexShader.hlsl" />
     <FxCompile Include="WaterPixelShader.hlsl" />
+    <FxCompile Include="WaterVertexShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Creature.cpp" />
     <ClCompile Include="DXCore.cpp" />
+    <ClCompile Include="Emitter.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameEntity.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -39,6 +37,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Creature.h" />
     <ClInclude Include="DXCore.h" />
+    <ClInclude Include="Emitter.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameEntity.h" />
     <ClInclude Include="GameStates.h" />

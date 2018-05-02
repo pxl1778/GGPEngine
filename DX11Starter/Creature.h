@@ -17,7 +17,7 @@ public:
 	Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11SamplerState* sampler);
 	~Creature();
 	void Update(float deltaTime, float totalTime);
-	void Draw(ID3D11DeviceContext* context, Camera* cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture);
+	void Draw(ID3D11DeviceContext* context, Camera* cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture, Projection* caustic);
 	//Entities
 	std::vector<GameEntity*> gameEntities;
 

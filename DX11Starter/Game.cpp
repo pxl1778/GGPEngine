@@ -118,6 +118,20 @@ Game::~Game()
 	delete refractionEntity;
 	delete refractionMat;
 	refractionNormalMap->Release();
+
+	delete causticLights;
+
+	//clean up particle stuff
+	bubbleTxt->Release();
+	heartTxt->Release();
+	delete bubbleEmitter;
+	delete bubbleEmitter2;
+	delete heartEmitter;
+	delete particlePS;
+	delete particleVS;
+	particleDepthState->Release();
+	particleBlendState->Release();
+
 }
 
 // --------------------------------------------------------
@@ -232,15 +246,106 @@ void Game::Init()
 	// that we don't wrap the refraction from the other
 	// side of the screen
 	D3D11_SAMPLER_DESC rSamp = {};
-	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	rSamp.Filter = D3D11_FILTER_ANISOTROPIC;
 	rSamp.MaxAnisotropy = 16;
 	rSamp.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Ask DirectX for the actual object
 	device->CreateSamplerState(&rSamp, &refractSampler);
+
+	//set up projection of caustic lights-----------------------------------
+	causticLights = new Projection({ XMFLOAT4X4(), XMFLOAT4X4(),nullptr });
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		.75f * 3.1415926535f,		// Field of View Angle
+		256/256,					// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&causticLights->projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+	XMFLOAT3 position = XMFLOAT3(0, 1, 0);
+	XMVECTOR forward = XMVectorSet(.01f, -1.0f, 0.0f, 0.0f);
+	XMVECTOR right = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(forward));
+	XMVECTOR up = XMVector3Cross(forward, right);
+	XMMATRIX newView = XMMatrixLookToLH(XMLoadFloat3(&position), XMVector3Normalize(forward), XMVector3Normalize(up));
+	XMStoreFloat4x4(&causticLights->viewMatrix, XMMatrixTranspose(newView));
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/caustic.png", 0, &causticLights->projectionTexture);
+
+	//particle setup--------------------------------------------------------
+	//load texture
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/bubble.png", 0, &bubbleTxt);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/heart.png", 0, &heartTxt);
+
+	//depth state for particles
+	D3D11_DEPTH_STENCIL_DESC pDesc = {};
+	pDesc.DepthEnable = true;
+	pDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; //turns off depth writing
+	pDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	device->CreateDepthStencilState(&pDesc, &particleDepthState);
+
+	//blend for particles
+	D3D11_BLEND_DESC blend = {};
+	blend.AlphaToCoverageEnable = false;
+	blend.IndependentBlendEnable = false;
+	blend.RenderTarget[0].BlendEnable = true;
+	blend.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	device->CreateBlendState(&blend, &particleBlendState);
+
+	// Set up particles
+	bubbleEmitter = new Emitter(
+		11,							// Max particles
+		.8f,							// Particles per second
+		20,								// Particle lifetime
+		0.1f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, .5f),	// Start color
+		XMFLOAT4(.7f, 1, 0.7f, 0),		// End color
+		XMFLOAT3(0, .15f, 0),				// Start velocity
+		XMFLOAT3(4, -2.5f, 0),				// Start position
+		XMFLOAT3(0, .1f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		bubbleTxt);
+
+	bubbleEmitter2 = new Emitter(
+		11,							// Max particles
+		.8f,							// Particles per second
+		20,								// Particle lifetime
+		0.1f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, .5f),	// Start color
+		XMFLOAT4(.7f, 1, 0.7f, 0),		// End color
+		XMFLOAT3(0, .15f, 0),				// Start velocity
+		XMFLOAT3(-4, -2.5f, 0),				// Start position
+		XMFLOAT3(0, .1f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		bubbleTxt);
+
+	heartEmitter = new Emitter(
+		5,							// Max particles
+		1.0f,							// Particles per second
+		3,								// Particle lifetime
+		1.0f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, 1),	// Start color
+		XMFLOAT4(1,1,1,.5),		// End color
+		XMFLOAT3(0, .3f, 0),				// Start velocity
+		XMFLOAT3(0, 4.5, 0),				// Start position
+		XMFLOAT3(0, 1.0f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		heartTxt);
 
 
 	// Tell the input assembler stage of the pipeline what kind of
@@ -313,6 +418,11 @@ void Game::LoadShaders()
 	alphaPostVertexShader->LoadShaderFile(L"BlurVertexShader.cso");
 	alphaPostPixelShader->LoadShaderFile(L"BlurPixelShader.cso");
 
+	//particle shader loading
+	particleVS = new SimpleVertexShader(device, context);
+	particleVS->LoadShaderFile(L"ParticleVS.cso");
+	particlePS = new SimplePixelShader(device, context);
+	particlePS->LoadShaderFile(L"ParticlePS.cso");
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 	// UI button shader
@@ -396,7 +506,7 @@ void Game::CreateUIButtons()
 
 void Game::DrawScene()
 {
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, causticLights);
 }
 
 void Game::DrawSky()
@@ -530,6 +640,10 @@ void Game::Update(float deltaTime, float totalTime)
 
 	refractionEntity->Rotate(XMFLOAT3(0, deltaTime * 0.25f, 0));
 	refractionEntity->CalculateWorldMatrix();
+
+	bubbleEmitter->Update(deltaTime);
+	bubbleEmitter2->Update(deltaTime);
+	if (guy->guyState == Happy) { heartEmitter->Update(deltaTime); }
 }
 
 // --------------------------------------------------------
@@ -560,7 +674,7 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
 	
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, causticLights);
 	//guy->Draw(context, cam);
 
 
@@ -672,6 +786,10 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Unbind this particular register
 	alphaPostPixelShader->SetShaderResourceView("Pixels", 0);
+
+	bubbleEmitter->Draw(context, cam);
+	bubbleEmitter2->Draw(context, cam);
+	if (guy->guyState == Happy) { heartEmitter->Draw(context, cam); }
 
 
 	// Present the back buffer to the user
