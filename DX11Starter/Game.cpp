@@ -277,7 +277,7 @@ void Game::LoadShaders()
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
 
 	// Load the sky box from a DDS file
-	CreateDDSTextureFromFile(device, L"../Assets/Textures/Skybox/Skybox3.dds", 0, &skyBoxSRV);
+	CreateDDSTextureFromFile(device, L"../Assets/Textures/WhirlpoolSkybox.dds", 0, &skyBoxSRV);
 
 	D3D11_SAMPLER_DESC sd = {};
 	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -567,8 +567,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Use our refraction render target and our regular depth buffer
 	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
 
-
-
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
@@ -607,32 +605,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Render the sky (after all opaque geometry)
 	UINT stride = sizeof(Vertex);
 	UINT offset = 0;
-	/*
 
-	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
-	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
-	
-	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
-	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
-
-	SkyBoxVertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
-	SkyBoxVertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
-	SkyBoxVertexShader->CopyAllBufferData();
-	SkyBoxVertexShader->SetShader();
-
-	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
-	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
-	//SkyBoxPixelShader->CopyAllBufferData();
-	SkyBoxPixelShader->SetShader();
-	
-	context->RSSetState(skyBoxRastState);
-	context->OMSetDepthStencilState(skyBoxDepthState, 0);
-	int test = m4->GetIndexCount();
-	context->DrawIndexed(test, 0, 0);
-	
-	// At the end of the frame, reset render states
-	context->RSSetState(0);
-	context->OMSetDepthStencilState(0, 0);*/
 	DrawSky();
 
 	// Back to the screen, but NO depth buffer for now!
@@ -672,9 +645,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	if (GetAsyncKeyState('D') & 0x8000) {
 		left = -5;
 	}
-
-
-
 
 	//set rendering to back buffer(so stuff actually draws)
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
