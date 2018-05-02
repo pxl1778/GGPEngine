@@ -123,6 +123,7 @@ Game::~Game()
 	delete refractionMat;
 	refractionNormalMap->Release();
 
+	causticLights->projectionTexture->Release();
 	delete causticLights;
 
 	//clean up particle stuff
@@ -697,10 +698,10 @@ void Game::Update(float deltaTime, float totalTime)
 		(*it)->CalculateWorldMatrix();
 	}
 
-	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 0, 0)); //Here is where we'd pass in the creature's position
+	cam->UpdateLookAt(deltaTime, XMFLOAT3(0, 1, 0)); //Here is where we'd pass in the creature's position
 	pLight1.Position = XMFLOAT3(pLight1.Position.x, sin(totalTime) * .5f, pLight1.Position.z);
 
-	refractionEntity->Rotate(XMFLOAT3(0, deltaTime * 0.25f, 0));
+	refractionEntity->Rotate(XMFLOAT3(0, deltaTime * 0.05f, 0));
 	refractionEntity->CalculateWorldMatrix();
 
 	bubbleEmitter->Update(deltaTime);

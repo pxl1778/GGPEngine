@@ -100,6 +100,7 @@ Emitter::~Emitter()
 	delete[] localParticleVertices;
 	vertexBuffer->Release();
 	indexBuffer->Release();
+
 }
 
 void Emitter::Update(float dt)
