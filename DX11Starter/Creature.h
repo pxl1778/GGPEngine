@@ -31,6 +31,7 @@ private:
 	//texture stuff
 	ID3D11ShaderResourceView* eyeTxt_neutral;
 	ID3D11ShaderResourceView* eyeTxt_angry;
+	ID3D11ShaderResourceView* eyeTxt_angry_alpha;
 	ID3D11ShaderResourceView* eyeTxt_closed;
 	ID3D11ShaderResourceView* bodyTxt;
 	ID3D11ShaderResourceView* tentacleTxt;

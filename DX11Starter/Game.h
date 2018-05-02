@@ -10,7 +10,7 @@
 #include "WICTextureLoader.h"
 #include <vector>
 #include "Creature.h"
-#include "UIButton.h"
+//#include "UIButton.h"
 
 
 class Game 
@@ -47,6 +47,7 @@ private:
 	void DrawScene();
 	void DrawSky();
 	void DrawRefraction();
+	void DrawBlurEffect();
 	void DrawFullscreenQuad(ID3D11ShaderResourceView* texture);
 
 	// Wrappers for DirectX shaders to provide simplified functionality
@@ -111,7 +112,9 @@ private:
 	Creature* guy;
 
 	// UI Button
-	UIButton* feedButton;
+	//UIButton* feedButton;
+	RECT feedButton2;
+	ID3D11ShaderResourceView* buttonSRV;
 
 	bool debugMode = false;
 
@@ -127,5 +130,8 @@ private:
 	GameEntity* refractionEntity;
 	Material* refractionMat;
 	ID3D11ShaderResourceView* refractionNormalMap;
+
+	// Reflection variables for angry eyes
+	//ID3D11ShaderResourceView* reflectionSRV;
 };
 

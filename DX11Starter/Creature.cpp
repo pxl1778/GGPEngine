@@ -8,7 +8,9 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 {
 	//loading textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/eyetxt.png", 0, &eyeTxt_neutral);
-	CreateWICTextureFromFile(device, context, L"../Assets/Textures/eyetxt_angry.png", 0, &eyeTxt_angry);
+	//CreateWICTextureFromFile(device, context, L"../Assets/Textures/eyetxt_angry.png", 0, &eyeTxt_angry);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/angryeyes_reflection.png", 0, &eyeTxt_angry);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/angryeyes_alpha.png", 0, &eyeTxt_angry_alpha);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/eyetxt_closed.png", 0, &eyeTxt_closed);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/bodytxt.png", 0, &bodyTxt);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/tentacletxt.png", 0, &tentacleTxt);
@@ -26,7 +28,7 @@ Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Sam
 
 	eyeMat_angry = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_angry, blankNormal, sampler);
 	eyeMat_angry->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
-	eyeMat_angry->GetPixelShader()->LoadShaderFile(L"ToonEyesPixelShader.cso");
+	eyeMat_angry->GetPixelShader()->LoadShaderFile(L"ToonAngryEyesPixelShader.cso");
 
 	eyeMat_closed = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), eyeTxt_closed, blankNormal, sampler);
 	eyeMat_closed->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
@@ -102,6 +104,7 @@ Creature::~Creature()
 	delete tentacleMat;
 	delete bodyMat;
 
+	eyeTxt_angry_alpha->Release();
 	eyeTxt_neutral->Release();
 	eyeTxt_closed->Release();
 	eyeTxt_angry->Release();
@@ -233,8 +236,6 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 			gameEntities[1]->SetMaterial(eyeMat_angry);
 			gameEntities[2]->SetMaterial(eyeMat_angry);
 			gameEntities[3]->SetMaterial(eyeMat_angry);
-			
-
 
 			break;
 		case Happy:
@@ -254,7 +255,9 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 	//draw all entities
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 
-
+		if (guyState == Angry) {
+			(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("AlphaTexture", eyeTxt_angry_alpha);
+		}
 
 		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
 

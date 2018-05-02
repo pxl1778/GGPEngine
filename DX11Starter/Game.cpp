@@ -103,12 +103,16 @@ Game::~Game()
 	delete guy;
 
 	// delete UI feed button
-	delete feedButton;
+	//delete feedButton;
+	buttonSRV->Release();
 
 	// Clean up refraction resources
 	refractSampler->Release();
 	refractionRTV->Release();
 	refractionSRV->Release();
+
+	//reflectionSRV->Release();
+
 	delete quadVS;
 	delete quadPS;
 	delete refractVS;
@@ -191,7 +195,7 @@ void Game::Init()
 
 	// Refraction setup ------------------------
 	ID3D11Texture2D* refractionRenderTexture;
-
+	
 	// Set up render texture
 	D3D11_TEXTURE2D_DESC rtDesc = {};
 	rtDesc.Width = width;
@@ -269,6 +273,7 @@ void Game::LoadShaders()
 	//Loading Textures
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_COLOR.jpg", 0, &wallTexture);
 	CreateWICTextureFromFile(device, context, L"../Assets/Textures/Wall Stone 004_NRM.jpg", 0, &wallNormal);
+	//CreateWICTextureFromFile(device, context, L"../Assets/Textures/angryeyes_reflection.tif", 0, &reflectionSRV);
 
 	// Load the sky box from a DDS file
 	CreateDDSTextureFromFile(device, L"../Assets/Textures/Skybox/Skybox3.dds", 0, &skyBoxSRV);
@@ -305,7 +310,7 @@ void Game::LoadShaders()
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 	// UI button shader
-	feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");
+	//feedButton->LoadShaders(device, context, "Oh wait", "I'm trolling");
 
 	// Refraction shaders
 	quadVS = new SimpleVertexShader(device, context);
@@ -363,23 +368,25 @@ void Game::CreateBasicGeometry()
 	// Set up the refraction entity (the object that refracts)
 	refractionEntity = new GameEntity(m1, refractionMat, "refractionBall"); 
 	refractionEntity->SetPosition(XMFLOAT3(0, 0, 0));
-	refractionEntity->SetScale(XMFLOAT3(10, 10, 10));
+	refractionEntity->SetScale(XMFLOAT3(20, 20, 20)); 
 }
 
 void Game::CreateUIButtons()
 {
-	UIVertex vertices1[] = {
-		{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Bottom-Left
-		{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Top-Left
-		{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Bottom-Right
-		//{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
-		{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Top-Right
-		//{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) },
-	};
+	//UIVertex vertices1[] = {
+	//	{ XMFLOAT3(-3.5f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Bottom-Left
+	//	{ XMFLOAT3(-3.5f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Top-Left
+	//	{ XMFLOAT3(-3.0f, 1.0f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Bottom-Right
+	//	{ XMFLOAT3(-3.0f, 1.5f, 5.0f), XMFLOAT4(1, 0, 0, 0) }, // Top-Right
+	//};
+	//
+	//int indices[] = { 0, 1, 2, 3 };
 
-	int indices[] = { 0, 1, 2, 3 };
+	//feedButton = new UIButton(vertices1, 4, indices, 4, device, 31, 99, 118, 186);
+	//feedButton = new UIButton(vertices1, 4, indices, 4, device, width/2 - width/27 - width/2.27, height/2 - height/16 - height/3.3, width/2 + width/27 - width/2.25, height/2 + height/16 - height/3.3);
 
-	feedButton = new UIButton(vertices1, 4, indices, 4, device, 31, 99, 118, 186);
+	feedButton2 = { 50, 50, 150, 150 };
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/feedButton.png", 0, &buttonSRV);
 }
 
 void Game::DrawScene()
@@ -389,27 +396,31 @@ void Game::DrawScene()
 
 void Game::DrawSky()
 {
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-
 	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
 	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
 
+	// Set the buffers
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
 	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
 
+	// Set up the sky shaders
 	SkyBoxVertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
 	SkyBoxVertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
 	SkyBoxVertexShader->CopyAllBufferData();
 	SkyBoxVertexShader->SetShader();
 
+
 	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
 	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
-	//SkyBoxPixelShader->CopyAllBufferData();
 	SkyBoxPixelShader->SetShader();
 
+	// Set up the render state options
 	context->RSSetState(skyBoxRastState);
 	context->OMSetDepthStencilState(skyBoxDepthState, 0);
+
+	// Do the actual drawing 
 	int test = m4->GetIndexCount();
 	context->DrawIndexed(test, 0, 0);
 
@@ -420,10 +431,11 @@ void Game::DrawSky()
 
 void Game::DrawRefraction()
 {
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
 	ID3D11Buffer* vb = refractionEntity->GetMesh()->GetVertexBuffer();
 	ID3D11Buffer* ib = refractionEntity->GetMesh()->GetIndexBuffer();
+
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
 	context->IASetVertexBuffers(0, 1, &vb, &stride, &offset);
 	context->IASetIndexBuffer(ib, DXGI_FORMAT_R32_UINT, 0);
 
@@ -446,6 +458,51 @@ void Game::DrawRefraction()
 
 	// Finally do the actual drawing
 	context->DrawIndexed(refractionEntity->GetMesh()->GetIndexCount(), 0, 0);
+}
+
+void Game::DrawBlurEffect()
+{
+	//Switch to post Process mode
+	//First Pass
+	int left = 0, right = 1, down = 0, up = 1;
+	if (GetAsyncKeyState('Q') & 0x8000) {
+		down = -5;
+	}
+	if (GetAsyncKeyState('E') & 0x8000) {
+		up = 5;
+	}
+	if (GetAsyncKeyState('A') & 0x8000) {
+		right = 5;
+	}
+	if (GetAsyncKeyState('D') & 0x8000) {
+		left = -5;
+	}
+
+	alphaPostVertexShader->SetShader();
+	alphaPostPixelShader->SetShader();
+	alphaPostPixelShader->SetShaderResourceView("Pixels", refractionSRV);
+	alphaPostPixelShader->SetSamplerState("Sampler", sampler);
+	alphaPostPixelShader->SetInt("Bleft", left);
+	alphaPostPixelShader->SetInt("Bright", right);
+	alphaPostPixelShader->SetInt("Bup", up);
+	alphaPostPixelShader->SetInt("Bdown", down);
+
+	alphaPostPixelShader->SetFloat("pixelWidth", 1.0f / width);
+	alphaPostPixelShader->SetFloat("pixelHeight", 1.0f / height);
+	alphaPostPixelShader->CopyAllBufferData();
+
+	// Unbind vert/index buffers
+	UINT stride = sizeof(Vertex);
+	UINT offset = 0;
+	ID3D11Buffer* nothing = 0;
+	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
+	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
+
+	// Draw a triangle that will hopefully fill the screen
+	context->Draw(3, 0);
+
+	// Unbind this particular register
+	alphaPostPixelShader->SetShaderResourceView("Pixels", 0);
 }
 
 void Game::DrawFullscreenQuad(ID3D11ShaderResourceView * texture)
@@ -476,6 +533,11 @@ void Game::OnResize()
 	DXCore::OnResize();
 
 	cam->UpdateProjectionMatrix(width, height);
+
+	//feedButton->x = width / 2 - width / 27 - width / 3;
+	//feedButton->width = width / 2 + width / 27 - width / 3;
+	//feedButton->y = height / 2 - height / 16 - height / 3.3;
+	//feedButton->height = height / 2 + height / 16 - height / 3.3;
 }
 
 // --------------------------------------------------------
@@ -532,40 +594,30 @@ void Game::Draw(float deltaTime, float totalTime)
 	//  - Do this ONCE PER FRAME
 	//  - At the beginning of Draw (before drawing *anything*)
 	context->ClearRenderTargetView(backBufferRTV, color);
-
-	context->ClearRenderTargetView(alphaPostRTV, color);
-
 	context->ClearRenderTargetView(refractionRTV, color);
-
+	context->ClearRenderTargetView(alphaPostRTV, color);
 	context->ClearDepthStencilView(
 		depthStencilView,
 		D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
 		1.0f,
 		0);
 
-
-	context->OMSetRenderTargets(1, &alphaPostRTV, depthStencilView);
-
-	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+	//context->OMSetRenderTargets(1, &alphaPostRTV, depthStencilView);
 	
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
-	//guy->Draw(context, cam);
-
+	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
 
 	// Use our refraction render target and our regular depth buffer
 	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
 
-
-
-	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
-		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
-		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
-		(*it)->Draw(context, cam);
-
-	}
-
+	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
+	//for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+	//	(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+	//	(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+	//	(*it)->Draw(context, cam);
+	//
+	//}
 	if (debugMode) {
 		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
 			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
@@ -585,42 +637,11 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Draw the scene (WITHOUT the refracting object)
 	DrawScene();
-	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1);
-	//guy->Draw(context, cam);
 
 	// Draw Feed Button
-	feedButton->Draw(context, cam->GetProjectionMatrix(), cam->GetViewMatrix());
-
+	//feedButton->Draw(context, cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
 	// Render the sky (after all opaque geometry)
-	UINT stride = sizeof(Vertex);
-	UINT offset = 0;
-	/*
-
-	ID3D11Buffer* skyVB = m4->GetVertexBuffer();
-	ID3D11Buffer* skyIB = m4->GetIndexBuffer();
-	
-	context->IASetVertexBuffers(0, 1, &skyVB, &stride, &offset);
-	context->IASetIndexBuffer(skyIB, DXGI_FORMAT_R32_UINT, 0);
-
-	SkyBoxVertexShader->SetMatrix4x4("view", cam->GetViewMatrix());
-	SkyBoxVertexShader->SetMatrix4x4("projection", cam->GetProjectionMatrix());
-	SkyBoxVertexShader->CopyAllBufferData();
-	SkyBoxVertexShader->SetShader();
-
-	SkyBoxPixelShader->SetShaderResourceView("SkyTexture", skyBoxSRV);
-	SkyBoxPixelShader->SetSamplerState("BasicSampler", sampler);
-	//SkyBoxPixelShader->CopyAllBufferData();
-	SkyBoxPixelShader->SetShader();
-	
-	context->RSSetState(skyBoxRastState);
-	context->OMSetDepthStencilState(skyBoxDepthState, 0);
-	int test = m4->GetIndexCount();
-	context->DrawIndexed(test, 0, 0);
-	
-	// At the end of the frame, reset render states
-	context->RSSetState(0);
-	context->OMSetDepthStencilState(0, 0);*/
 	DrawSky();
 
 	// Back to the screen, but NO depth buffer for now!
@@ -628,9 +649,12 @@ void Game::Draw(float deltaTime, float totalTime)
 	// screen without affecting (or respecting) the existing depth buffer
 	context->OMSetRenderTargets(1, &backBufferRTV, 0);
 
+	// Do blur effect
+	DrawBlurEffect(); // can't use DrawFullscreenQuad() fxn with blur effect D:
+
 	// Draw a fullscreen quad with our render target texture (so the user can see
 	// what we've drawn so far).  
-	DrawFullscreenQuad(refractionSRV);
+	//DrawFullscreenQuad(refractionSRV);
 
 	// Turn the depth buffer back on, so we can still
 	// used the depths from our earlier scene render
@@ -645,52 +669,16 @@ void Game::Draw(float deltaTime, float totalTime)
 	ID3D11ShaderResourceView* nullSRV[16] = {};
 	context->PSSetShaderResources(0, 16, nullSRV);
 
-	//Switch to post Process mode
-	//First Pass
-	int left = 0, right = 1, down = 0, up = 1;
-	if (GetAsyncKeyState('Q') & 0x8000) {
-		down = -5;
-	}
-	if (GetAsyncKeyState('E') & 0x8000) {
-		up = 5;
-	}
-	if (GetAsyncKeyState('A') & 0x8000) {
-		right = 5;
-	}
-	if (GetAsyncKeyState('D') & 0x8000) {
-		left = -5;
-	}
+	// Draw Feed Button
+	spriteBatch->Begin();
+	spriteBatch->Draw(buttonSRV, feedButton2);
+	spriteBatch->End();
 
-
-
-
-	//set rendering to back buffer(so stuff actually draws)
-	context->OMSetRenderTargets(1, &backBufferRTV, 0);
-	//set shaders and associated resources
-	alphaPostVertexShader->SetShader();
-	alphaPostPixelShader->SetShader();
-	alphaPostPixelShader->SetShaderResourceView("Pixels", alphaPostSRV);
-	alphaPostPixelShader->SetSamplerState("Sampler", sampler);
-	alphaPostPixelShader->SetInt("Bleft", left);
-	alphaPostPixelShader->SetInt("Bright", right);
-	alphaPostPixelShader->SetInt("Bup", up);
-	alphaPostPixelShader->SetInt("Bdown", down);
-
-	alphaPostPixelShader->SetFloat("pixelWidth", 1.0f / width);
-	alphaPostPixelShader->SetFloat("pixelHeight", 1.0f / height);
-	alphaPostPixelShader->CopyAllBufferData();
-
-	// Unbind vert/index buffers
-	ID3D11Buffer* nothing = 0;
-	context->IASetVertexBuffers(0, 1, &nothing, &stride, &offset);
-	context->IASetIndexBuffer(0, DXGI_FORMAT_R32_UINT, 0);
-
-	// Draw a triangle that will hopefully fill the screen
-	context->Draw(3, 0);
-
-	// Unbind this particular register
-	alphaPostPixelShader->SetShaderResourceView("Pixels", 0);
-
+	// Don't forget to reset states!
+	float blendFactors[4] = { 1,1,1,1 };
+	context->OMSetBlendState(0, blendFactors, 0xFFFFFFFF);
+	context->RSSetState(0);
+	context->OMSetDepthStencilState(0, 0);
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it
@@ -715,29 +703,30 @@ void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 	// RED FLAG: Hard-coded values atm - YIKES!
 	switch (gs) {
 		case START_MENU:
-			if (x >= button1->x && x <= button1->width && y >= button1->y && y <= button1->height) {
+			if (x >= startButton.left && x <= startButton.right && y >= startButton.top && y <= startButton.bottom) {
 				gs = IN_GAME;
 				printf("\nStarting game");
 			}
 
-			if (x >= button2->x && x <= button2->width && y >= button2->y && y <= button2->height) {
+			if (x >= exitButton.left && x <= exitButton.right && y >= exitButton.top && y <= exitButton.bottom) {
 				Quit();
 			}
 			break;
 		case IN_GAME:
-			if(x >= feedButton->x && x <= feedButton->width && y >= feedButton->y && y <= feedButton->height) {
+			if (x >= feedButton2.left && x <= feedButton2.right && y >= feedButton2.top && y <= feedButton2.bottom) {
 				guy->isFeeding = true;
 				printf("\nYou fed the thing");
 			}
+
 			break;
 		case PAUSE_MENU:
-			if (x >= button2->x && x <= button2->width && y >= button2->y && y <= button2->height) {
+			if (x >= resumeButton.left && x <= resumeButton.right && y >= resumeButton.top && y <= resumeButton.bottom) {
 				gs = IN_GAME;
 				printf("\nResuming game");
 			}
 			break;
 		case GAME_OVER:
-			if (x >= button3->x && x <= button3->width && y >= button3->y && y <= button3->height) {
+			if (x >= returnButton.left && x <= returnButton.right && y >= returnButton.top && y <= returnButton.bottom) {
 				gs = START_MENU;
 				printf("\nReturning to Start Menu");
 				// don't forget to reset in-game properties here or when transitioning to in-game from start menu
@@ -749,7 +738,7 @@ void Game::OnMouseDown(WPARAM buttonState, int x, int y)
 	prevMousePos.x = x;
 	prevMousePos.y = y;
 
-	TestInteraction(x, y);
+	//TestInteraction(x, y);
 
 	// Caputure the mouse so we keep getting mouse move
 	// events even if the mouse leaves the window.  we'll be

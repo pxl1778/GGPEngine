@@ -43,6 +43,7 @@ cbuffer externalData : register(b0) {
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
 TextureCube SkyTexture	: register(t2);
+Texture2D AlphaTexture : register(t3);
 SamplerState Sampler : register(s0);
 
 // --------------------------------------------------------
@@ -86,6 +87,13 @@ float4 main(VertexToPixel input) : SV_TARGET
 	//diffuse
 	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
 
+	float4 solidColor = surfaceColor * finalColor * input.color;
+
+	// alpha 
+	float4 alphaColor = AlphaTexture.Sample(Sampler, input.uv);
+
+	//return surfaceColor * finalColor * input.color;
+
 	// Skybox Reflection
 	// Get reflection vector of camera vector bouncing off this surface pixel
 	float3 reflectVector = reflect(-dirToCamera, input.normal);
@@ -94,8 +102,7 @@ float4 main(VertexToPixel input) : SV_TARGET
 	// Interpolate the final color based on a very rough fresnel
 	float fakeFresnel = saturate(dot(input.normal, dirToCamera));
 	fakeFresnel = pow(fakeFresnel, 0.75f);
-	float3 final = lerp(reflectColor, surfaceColor * finalColor * input.color, fakeFresnel);
-	
+	float3 final = lerp(reflectColor, solidColor, (fakeFresnel * alphaColor.r) + (1 * (1-alphaColor.r)));
+
 	return float4(final, 1);
-	//return surfaceColor * finalColor * input.color;
 }

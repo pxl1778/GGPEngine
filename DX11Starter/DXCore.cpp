@@ -2,6 +2,7 @@
 
 #include <WindowsX.h>
 #include <sstream>
+#include "WICTextureLoader.h" 
 
 using namespace DirectX;
 
@@ -81,12 +82,10 @@ DXCore::~DXCore()
 	if (context) { context->Release();}
 	if (device) { device->Release();}
 
-	m_font.reset();
-	m_spriteBatch.reset();
+	buttonSRV->Release();
 
-	delete button1;
-	delete button2;
-	delete button3;
+	delete spriteBatch;
+	delete spriteFont;
 }
 
 // --------------------------------------------------------
@@ -276,24 +275,16 @@ HRESULT DXCore::InitDirectX()
 	viewport.MaxDepth	= 1.0f;
 	context->RSSetViewports(1, &viewport);
 
-	m_font = std::make_unique<DirectX::SpriteFont>(device, L"../SpriteFont/myfile.spritefont");
-	m_spriteBatch = std::make_unique<DirectX::SpriteBatch>(context);
-
-	m_fontPos_title.x = 1280 / 2.f;
-	m_fontPos_title.y = 180.f;
-	
-	m_fontPos.x = 1280 / 2.f;
-	m_fontPos.y = 720 / 2.f;
-	
-	m_fontPos2.x = 1280 / 2.f;
-	m_fontPos2.y = 720 / 2.f + 100;
+	spriteBatch = new SpriteBatch(context);
+	spriteFont = new SpriteFont(device, L"../SpriteFont/myfile.spritefont");
 
 	// Create UIButtons
-	CreateUIButtons();
-	// Load UIButton Shaders
-	button1->LoadShaders(device, context, "Oh wait", "I'm trolling");
-	button2->LoadShaders(device, context, "Oh wait", "I'm trolling");
-	button3->LoadShaders(device, context, "Oh wait", "I'm trolling");
+	startButton		= { (long)width/2 - 100, (long)height/2 - 30, (long)width/2 + 100, (long)height/2 + 30 }; // left, top, right, bot
+	exitButton		= { (long)width / 2 - 100, (long)height / 2 - 30 + 100, (long)width / 2 + 100, (long)height / 2 + 30 + 100};
+	resumeButton	= { (long)width / 2 - 100, (long)height / 2 - 30, (long)width / 2 + 100, (long)height / 2 + 30 };
+	returnButton	= { (long)width / 2 - 200, (long)height / 2 - 30, (long)width / 2 + 200, (long)height / 2 + 30 };
+
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/black.jpg", 0, &buttonSRV);
 	
 	// Create Projection Matrix
 	XMMATRIX P = XMMatrixPerspectiveFovLH(
@@ -381,6 +372,12 @@ void DXCore::OnResize()
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 	context->RSSetViewports(1, &viewport);
+
+	// reposition ui buttons
+	startButton = { (long)width / 2 - 100, (long)height / 2 - 30, (long)width / 2 + 100, (long)height / 2 + 30 };
+	exitButton = { (long)width / 2 - 100, (long)height / 2 - 30 + 100, (long)width / 2 + 100, (long)height / 2 + 30 + 100 };
+	resumeButton = { (long)width / 2 - 100, (long)height / 2 - 30, (long)width / 2 + 100, (long)height / 2 + 30 };
+	returnButton = { (long)width / 2 - 200, (long)height / 2 - 30, (long)width / 2 + 200, (long)height / 2 + 30 };
 }
 
 
@@ -424,7 +421,7 @@ HRESULT DXCore::Run()
 			// Switch game states manually with num presses (TEMP CODE)
 			if (GetAsyncKeyState('1')) gs = START_MENU;
 			if (GetAsyncKeyState('2')) gs = IN_GAME;
-			if (GetAsyncKeyState('3')) gs = PAUSE_MENU;
+			if (GetAsyncKeyState('P')) gs = PAUSE_MENU;
 			if (GetAsyncKeyState('4')) gs = GAME_OVER;
 			
 			// Checks game state and executes proper game state code
@@ -439,51 +436,25 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
-					// Draw UIButtons
-					button1->Draw(context, projectionMatrix, viewMatrix);
-					button2->Draw(context, projectionMatrix, viewMatrix);
-
 					// Display some text for Start Menu game state
-					m_spriteBatch->Begin();
-					const wchar_t* title_output = L"ID3D11 Abominations";
-					DirectX::SimpleMath::Vector2 title_origin = m_font->MeasureString(title_output);
-					title_origin.x = title_origin.x / 2;
-					title_origin.y = title_origin.y / 2;
+					ID3D11ShaderResourceView* fontSpriteSheet;
+					spriteFont->GetSpriteSheet(&fontSpriteSheet);
 
-					m_font->DrawString(
-						m_spriteBatch.get(),
-						title_output,
-						m_fontPos_title,
-						DirectX::Colors::White,
-						0.f,
-						title_origin);
+					spriteBatch->Begin();
+					spriteBatch->Draw(buttonSRV, startButton);
+					spriteBatch->Draw(buttonSRV, exitButton);
+					spriteFont->DrawString(spriteBatch, L"Insanimals", XMFLOAT2(width / 2.5, height / 4));
+					spriteFont->DrawString(spriteBatch, L"Start", XMFLOAT2(width / 2 - 70, height / 2 - 20));
+					spriteFont->DrawString(spriteBatch, L"Exit", XMFLOAT2(width / 2 - 60, height/2 - 20 + 100));
+					spriteBatch->End();
 
-					const wchar_t* output = L"Start";
-					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
-					origin.x = origin.x / 2;
-					origin.y = origin.y / 2;
+					fontSpriteSheet->Release();
 
-					m_font->DrawString(
-						m_spriteBatch.get(), 
-						output,
-						m_fontPos, 
-						DirectX::Colors::White, 
-						0.f, 
-						origin);
-
-					const wchar_t* output2 = L"Exit";
-					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
-					origin2.x = origin2.x / 2;
-					origin2.y = origin2.y / 2;
-
-					m_font->DrawString(
-						m_spriteBatch.get(),
-						output2,
-						m_fontPos2,
-						DirectX::Colors::White,
-						0.f,
-						origin2);
-					m_spriteBatch->End();
+					// Don't forget to reset states!
+					float blendFactors[4] = { 1,1,1,1 };
+					context->OMSetBlendState(0, blendFactors, 0xFFFFFFFF);
+					context->RSSetState(0);
+					context->OMSetDepthStencilState(0, 0);
 
 					swapChain->Present(0, 0);
 					break;
@@ -504,37 +475,23 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
-					// Draw UIButtons
-					button2->Draw(context, projectionMatrix, viewMatrix);
-					
 					// Display some text for Pause Menu game state
-					m_spriteBatch->Begin();
-					const wchar_t* output = L"Paused";
-					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
-					origin.x = origin.x / 2;
-					origin.y = origin.y / 2;
+					ID3D11ShaderResourceView* fontSpriteSheet;
+					spriteFont->GetSpriteSheet(&fontSpriteSheet);
 
-					m_font->DrawString(
-						m_spriteBatch.get(),
-						output,
-						m_fontPos,
-						DirectX::Colors::White,
-						0.f,
-						origin);
+					spriteBatch->Begin();
+					spriteBatch->Draw(buttonSRV, resumeButton);
+					spriteFont->DrawString(spriteBatch, L"Paused", XMFLOAT2(width / 2 - 80, height / 4));
+					spriteFont->DrawString(spriteBatch, L"Resume", XMFLOAT2(width / 2 - 80, height / 2 - 20));
+					spriteBatch->End();
 
-					const wchar_t* output2 = L"Resume";
-					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
-					origin2.x = origin2.x / 2;
-					origin2.y = origin2.y / 2;
+					fontSpriteSheet->Release();
 
-					m_font->DrawString(
-						m_spriteBatch.get(),
-						output2,
-						m_fontPos2,
-						DirectX::Colors::White,
-						0.f,
-						origin2);
-					m_spriteBatch->End();
+					// Don't forget to reset states!
+					float blendFactors[4] = { 1,1,1,1 };
+					context->OMSetBlendState(0, blendFactors, 0xFFFFFFFF);
+					context->RSSetState(0);
+					context->OMSetDepthStencilState(0, 0);
 
 					swapChain->Present(0, 0);
 					break;
@@ -549,37 +506,23 @@ HRESULT DXCore::Run()
 						1.0f,
 						0);
 
-					// Draw UIButtons
-					button3->Draw(context, projectionMatrix, viewMatrix);
-
 					// Display text for GAME OVER game state
-					m_spriteBatch->Begin();
-					const wchar_t* output = L"GAME OVER";
-					DirectX::SimpleMath::Vector2 origin = m_font->MeasureString(output);
-					origin.x = origin.x / 2;
-					origin.y = origin.y / 2;
+					ID3D11ShaderResourceView* fontSpriteSheet;
+					spriteFont->GetSpriteSheet(&fontSpriteSheet);
 
-					m_font->DrawString(
-						m_spriteBatch.get(),
-						output,
-						m_fontPos,
-						DirectX::Colors::White,
-						0.f,
-						origin);
+					spriteBatch->Begin();
+					spriteBatch->Draw(buttonSRV, returnButton);
+					spriteFont->DrawString(spriteBatch, L"GAME OVER", XMFLOAT2(width / 2 - 120, height / 4));
+					spriteFont->DrawString(spriteBatch, L"Return to Start", XMFLOAT2(width / 2 - 200, height / 2 - 20));
+					spriteBatch->End();
 
-					const wchar_t* output2 = L"Return to Start";
-					DirectX::SimpleMath::Vector2 origin2 = m_font->MeasureString(output2);
-					origin2.x = origin2.x / 2;
-					origin2.y = origin2.y / 2;
+					fontSpriteSheet->Release();
 
-					m_font->DrawString(
-						m_spriteBatch.get(),
-						output2,
-						m_fontPos2,
-						DirectX::Colors::White,
-						0.f,
-						origin2);
-					m_spriteBatch->End();
+					// Don't forget to reset states!
+					float blendFactors[4] = { 1,1,1,1 };
+					context->OMSetBlendState(0, blendFactors, 0xFFFFFFFF);
+					context->RSSetState(0);
+					context->OMSetDepthStencilState(0, 0);
 
 					swapChain->Present(0, 0);
 					break;
@@ -601,52 +544,6 @@ HRESULT DXCore::Run()
 void DXCore::Quit()
 {
 	PostMessage(this->hWnd, WM_CLOSE, NULL, NULL);
-}
-
-
-void DXCore::CreateUIButtons()
-{
-	UIVertex vertices1[] = {
-		{ XMFLOAT3(-0.45f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
-		{ XMFLOAT3(-0.45f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(+0.5f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
- 		//{ XMFLOAT3(-0.45f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(+0.5f, +0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
-		//{ XMFLOAT3(+0.5f, -0.15f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
-	};
-
-	/*UIVertex vertices1[] = {
-		{ XMFLOAT3(-0.45f, -0.15f, 0.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
-		{ XMFLOAT3(0.0f, 1.0f, 0.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(1.0f, 0.0f, 0.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
-		{ XMFLOAT3(1.0f, 1.0f, 0.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
-	};*/
-
-	int indices[] = { 0, 1, 2, 3 };
-
-	button1 = new UIButton(vertices1, 4, indices, 4, device, 562, 334, 727, 385);
-
-	UIVertex vertices2[] = {
-		{ XMFLOAT3(-0.45f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
-		{ XMFLOAT3(-0.45f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(+0.5f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
-		//{ XMFLOAT3(-0.45f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(+0.5f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
-		//{ XMFLOAT3(+0.5f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
-	};
-
-	button2 = new UIButton(vertices2, 4, indices, 4, device, 562, 434, 727, 485);
-
-	UIVertex vertices3[] = {
-		{ XMFLOAT3(-1.15f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Left
-		{ XMFLOAT3(-1.15f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(+1.2f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
-		//{ XMFLOAT3(-1.15f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Left
-		{ XMFLOAT3(+1.2f, -0.42f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Top-Right
-		//{ XMFLOAT3(+1.2f, -0.72f, 5.0f), XMFLOAT4(0.0f, 0.0f, 0.0f, 1) }, // Bottom-Right
-	};
-
-	button3 = new UIButton(vertices3, 4, indices, 4, device, 439, 434, 848, 485);
 }
 
 // --------------------------------------------------------

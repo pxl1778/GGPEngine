@@ -4,10 +4,10 @@
 #include <d3d11.h>
 #include <string>
 #include "GameStates.h"
+#include "SpriteBatch.h"
 #include "SpriteFont.h"
 #include "SimpleMath.h"
 #include <DirectXMath.h>
-#include "UIButton.h"
 
 // We can include the correct library files here
 // instead of in Visual Studio settings if we want
@@ -79,10 +79,15 @@ protected:
 	// Game state enum
 	GAME_STATES gs;
 
+	// Sprite Font
+	DirectX::SpriteBatch* spriteBatch;
+	DirectX::SpriteFont* spriteFont;
+
 	// UI Buttons
-	UIButton* button1; // Start Button
-	UIButton* button2; // Exit & Resume Buttons
-	UIButton* button3; // Return to Menu Button
+	RECT startButton;
+	RECT exitButton;
+	RECT resumeButton;
+	RECT returnButton;
 
 	// Helper function for allocating a console window
 	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
@@ -100,18 +105,12 @@ private:
 	int fpsFrameCount;
 	float fpsTimeElapsed;
 
-	// Sprite Font
-	std::unique_ptr<DirectX::SpriteFont> m_font;
-	DirectX::SimpleMath::Vector2 m_fontPos_title;
-	DirectX::SimpleMath::Vector2 m_fontPos;
-	DirectX::SimpleMath::Vector2 m_fontPos2;
-	std::unique_ptr<DirectX::SpriteBatch> m_spriteBatch;
+	// texture for buttons
+	ID3D11ShaderResourceView* buttonSRV;
 
 	// projection Matrix for GUI buttons
 	DirectX::XMFLOAT4X4 projectionMatrix;
 	DirectX::XMFLOAT4X4 viewMatrix;
-
-	void CreateUIButtons();
 
 	void UpdateTimer();			// Updates the timer for this frame
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
