@@ -10,6 +10,8 @@ using namespace DirectX;
 // message handling function below can talk to our object
 DXCore* DXCore::DXCoreInstance = 0;
 
+float globalTotalTime = 0;
+
 // --------------------------------------------------------
 // The global callback function for handling windows OS-level messages.
 //
@@ -564,6 +566,7 @@ void DXCore::UpdateTimer()
 
 	// Calculate the total time from start to now
 	totalTime = (float)((currentTime - startTime) * perfCounterSeconds);
+	globalTotalTime = totalTime;
 
 	// Save current time for next frame
 	previousTime = currentTime;

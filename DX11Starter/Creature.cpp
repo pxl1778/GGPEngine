@@ -2,8 +2,6 @@
 // For the DirectX Math library
 using namespace DirectX;
 
-
-
 Creature::Creature(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11SamplerState* sampler)
 {
 	//loading textures
@@ -169,7 +167,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//return to neutral state for anim 2
 				if (gameEntities[i]->GetRotation().x < 0) {
 					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, -.012, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
 
@@ -183,7 +181,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//anim 2- tentacles curl in defensively
 				if (gameEntities[i]->GetRotation().x > -XM_PIDIV4) {
 					gameEntities[i]->Rotate(XMFLOAT3(-2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, .006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, .012, 0));
 					//printf("%.2f", gameEntities[i]->GetRotation().x); printf("\n");
 					gameEntities[i]->MoveForward(-.002);
 				}
@@ -192,7 +190,7 @@ void Creature::Update(float deltaTime, float totalTime)
 				//return to neutral state for anim 2
 				if (gameEntities[i]->GetRotation().x < 0) {
 					gameEntities[i]->Rotate(XMFLOAT3(2 * deltaTime, 0, 0));
-					gameEntities[i]->Translate(XMFLOAT3(0, -.006, 0));
+					gameEntities[i]->Translate(XMFLOAT3(0, -.012, 0));
 					gameEntities[i]->MoveForward(.002);
 				}
 				//if (gameEntities[i]->GetRotation().x < XM_PI / 4) {
@@ -205,11 +203,12 @@ void Creature::Update(float deltaTime, float totalTime)
 
 	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
 		(*it)->CalculateWorldMatrix();
+		(*it)->GetMaterial()->GetPixelShader()->SetData("Time", &totalTime, sizeof(float));
 	}
 }
 
 //for now draw method is hard coded to accept the right amount of lights in the scene; this will need to be changed if we change the lights
-void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture)
+void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLight* dLight, DirectionalLight* dLight2, PointLight* pLight1, ID3D11ShaderResourceView* skyBoxTexture, Projection* caustics)
 {
 	//some colors to send to shader depending on guy's mood
 	XMFLOAT4 white = XMFLOAT4(1.00f, 1.0f, 1.0f, 1.0);
@@ -263,6 +262,10 @@ void Creature::Draw(ID3D11DeviceContext * context, Camera * cam, DirectionalLigh
 
 		
 		(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("SkyTexture", skyBoxTexture);
+		(*it)->GetMaterial()->GetPixelShader()->SetShaderResourceView("ProjectionTexture", caustics->projectionTexture);
+		(*it)->GetMaterial()->GetVertexShader()->SetMatrix4x4("causticView", caustics->viewMatrix);
+		(*it)->GetMaterial()->GetVertexShader()->SetMatrix4x4("causticProjection", caustics->projectionMatrix);
+		
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
 		//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 

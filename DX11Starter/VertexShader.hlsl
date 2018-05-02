@@ -11,6 +11,10 @@ cbuffer externalData : register(b0)
 	matrix view;
 	matrix projection;
 	float4 color;
+
+	//additional matrices for caustic light projection texturing - represent view and projection of the point of origin
+	matrix causticView;
+	matrix causticProjection;
 };
 
 // Struct representing a single vertex worth of data
@@ -58,6 +62,7 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;	// XYZW position (System Value Position)
 	float2 uv			: TEXCOORD0;
 	float3 worldPos		: TEXCOORD1;
+	float4 viewPos		: TEXCOORD2;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float4 color		: COLOR;
@@ -96,6 +101,9 @@ VertexToPixel main( VertexShaderInput input )
 	output.tangent = mul(input.tangent, (float3x3)world);
 
 	output.color = color;
+
+	//store the position of the vertex as viewed by the projection view point 
+	output.viewPos = mul(mul(mul(input.position, world), causticView), causticProjection);
 
 	// Whatever we return will make its way through the pipeline to the
 	// next programmable stage we're using (the pixel shader for now)

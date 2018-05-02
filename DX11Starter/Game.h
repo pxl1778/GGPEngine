@@ -11,7 +11,8 @@
 #include <vector>
 #include "Creature.h"
 //#include "UIButton.h"
-
+//#include "UIButton.h"
+#include "Emitter.h"
 
 class Game 
 	: public DXCore
@@ -83,6 +84,7 @@ private:
 	Mesh* m4;
 	Mesh* m5;
 	Mesh* m6;
+	Mesh* waterMesh;
 
 	std::vector<Mesh*> rayMeshes;
 
@@ -90,6 +92,7 @@ private:
 	Material* mat1;
 	Material* debugMat;
 	Material* SkyBoxMat;
+	Material* waterMat;
 
 	//Texture Stuff
 	ID3D11ShaderResourceView* wallTexture;
@@ -107,6 +110,8 @@ private:
 	DirectionalLight dLight1;
 	DirectionalLight dLight2;
 	PointLight pLight1;
+	Projection* causticLights;
+
 
 	//main character
 	Creature* guy;
@@ -131,7 +136,15 @@ private:
 	Material* refractionMat;
 	ID3D11ShaderResourceView* refractionNormalMap;
 
-	// Reflection variables for angry eyes
-	//ID3D11ShaderResourceView* reflectionSRV;
+	//bubble particle stuff
+	ID3D11ShaderResourceView* bubbleTxt;
+	ID3D11ShaderResourceView* heartTxt;
+	Emitter* bubbleEmitter;
+	Emitter* bubbleEmitter2;
+	Emitter* heartEmitter;
+	SimpleVertexShader* particleVS;
+	SimplePixelShader* particlePS;
+	ID3D11DepthStencilState* particleDepthState;
+	ID3D11BlendState* particleBlendState;
 };
 

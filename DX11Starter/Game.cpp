@@ -63,10 +63,11 @@ Game::~Game()
 	delete m4;
 	delete m5; 
 	delete m6;	
-
+	delete waterMesh;
 
 	delete mat1;
 	delete debugMat;
+	delete waterMat;
 
 	while (!gameEntities.empty()) {
 		delete gameEntities.back();
@@ -121,6 +122,20 @@ Game::~Game()
 	delete refractionEntity;
 	delete refractionMat;
 	refractionNormalMap->Release();
+
+	delete causticLights;
+
+	//clean up particle stuff
+	bubbleTxt->Release();
+	heartTxt->Release();
+	delete bubbleEmitter;
+	delete bubbleEmitter2;
+	delete heartEmitter;
+	delete particlePS;
+	delete particleVS;
+	particleDepthState->Release();
+	particleBlendState->Release();
+
 }
 
 // --------------------------------------------------------
@@ -235,9 +250,9 @@ void Game::Init()
 	// that we don't wrap the refraction from the other
 	// side of the screen
 	D3D11_SAMPLER_DESC rSamp = {};
-	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	rSamp.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	rSamp.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	rSamp.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
 	rSamp.Filter = D3D11_FILTER_ANISOTROPIC;
 	rSamp.MaxAnisotropy = 16;
 	rSamp.MaxLOD = D3D11_FLOAT32_MAX;
@@ -245,12 +260,103 @@ void Game::Init()
 	// Ask DirectX for the actual object
 	device->CreateSamplerState(&rSamp, &refractSampler);
 
+	//set up projection of caustic lights-----------------------------------
+	causticLights = new Projection({ XMFLOAT4X4(), XMFLOAT4X4(),nullptr });
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		.75f * 3.1415926535f,		// Field of View Angle
+		256/256,					// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&causticLights->projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+	XMFLOAT3 position = XMFLOAT3(0, 1, 0);
+	XMVECTOR forward = XMVectorSet(.01f, -1.0f, 0.0f, 0.0f);
+	XMVECTOR right = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(forward));
+	XMVECTOR up = XMVector3Cross(forward, right);
+	XMMATRIX newView = XMMatrixLookToLH(XMLoadFloat3(&position), XMVector3Normalize(forward), XMVector3Normalize(up));
+	XMStoreFloat4x4(&causticLights->viewMatrix, XMMatrixTranspose(newView));
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/caustic.png", 0, &causticLights->projectionTexture);
+
+	//particle setup--------------------------------------------------------
+	//load texture
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/bubble.png", 0, &bubbleTxt);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/heart.png", 0, &heartTxt);
+
+	//depth state for particles
+	D3D11_DEPTH_STENCIL_DESC pDesc = {};
+	pDesc.DepthEnable = true;
+	pDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; //turns off depth writing
+	pDesc.DepthFunc = D3D11_COMPARISON_LESS;
+	device->CreateDepthStencilState(&pDesc, &particleDepthState);
+
+	//blend for particles
+	D3D11_BLEND_DESC blend = {};
+	blend.AlphaToCoverageEnable = false;
+	blend.IndependentBlendEnable = false;
+	blend.RenderTarget[0].BlendEnable = true;
+	blend.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlend = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	blend.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	device->CreateBlendState(&blend, &particleBlendState);
+
+	// Set up particles
+	bubbleEmitter = new Emitter(
+		11,							// Max particles
+		.8f,							// Particles per second
+		20,								// Particle lifetime
+		0.1f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, .5f),	// Start color
+		XMFLOAT4(.7f, 1, 0.7f, 0),		// End color
+		XMFLOAT3(0, .15f, 0),				// Start velocity
+		XMFLOAT3(4, -2.5f, 0),				// Start position
+		XMFLOAT3(0, .1f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		bubbleTxt);
+
+	bubbleEmitter2 = new Emitter(
+		11,							// Max particles
+		.8f,							// Particles per second
+		20,								// Particle lifetime
+		0.1f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, .5f),	// Start color
+		XMFLOAT4(.7f, 1, 0.7f, 0),		// End color
+		XMFLOAT3(0, .15f, 0),				// Start velocity
+		XMFLOAT3(-4, -2.5f, 0),				// Start position
+		XMFLOAT3(0, .1f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		bubbleTxt);
+
+	heartEmitter = new Emitter(
+		5,							// Max particles
+		1.0f,							// Particles per second
+		3,								// Particle lifetime
+		1.0f,							// Start size
+		2.0f,							// End size
+		XMFLOAT4(1, 1, 1, 1),	// Start color
+		XMFLOAT4(1,1,1,.5),		// End color
+		XMFLOAT3(0, .3f, 0),				// Start velocity
+		XMFLOAT3(0, 4.5, 0),				// Start position
+		XMFLOAT3(0, 1.0f, 0),				// Start acceleration
+		device,
+		particleVS,
+		particlePS,
+		heartTxt);
+
 
 	// Tell the input assembler stage of the pipeline what kind of
 	// geometric primitives (points, lines or triangles) we want to draw.  
 	// Essentially: "What kind of shape should the GPU draw with our data?"
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(.4f, .3f, .9f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
+	dLight1 = DirectionalLight({XMFLOAT4(.05f, .05f, .13f, 1.0f), XMFLOAT4(0.0f, .95f, 1.0f, 1.0f), XMFLOAT3(1.0f, -1.0f, 0)});
 	dLight2 = DirectionalLight({ XMFLOAT4(0, 0, 0, 0), XMFLOAT4(.01f, .5f, .01f, 1.0f), XMFLOAT3(-1.0f, 0.0f, 0.0f) });
 	pLight1 = PointLight({ XMFLOAT4(1.0f, .1f, .1f, 1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f), .1f });
 
@@ -259,6 +365,11 @@ void Game::Init()
 	for (std::vector<GameEntity*>::iterator it = guy->gameEntities.begin(); it != guy->gameEntities.end(); ++it) {
 		debugCubes.push_back(new GameEntity(m4, debugMat, "debugcube"));
 	}
+
+	gameEntities.push_back(new GameEntity(waterMesh, waterMat, "water"));
+	gameEntities.back()->SetRotation(XMFLOAT3(XM_PI, 0, 0));
+	gameEntities.back()->Translate(XMFLOAT3(0, 20.0f, 0));
+	gameEntities.back()->Scale(XMFLOAT3(1.7f, 1.7f, 1.7f));
 
 }
 
@@ -276,7 +387,7 @@ void Game::LoadShaders()
 	//CreateWICTextureFromFile(device, context, L"../Assets/Textures/angryeyes_reflection.tif", 0, &reflectionSRV);
 
 	// Load the sky box from a DDS file
-	CreateDDSTextureFromFile(device, L"../Assets/Textures/Skybox/Skybox3.dds", 0, &skyBoxSRV);
+	CreateDDSTextureFromFile(device, L"../Assets/Textures/WhirlpoolSkybox.dds", 0, &skyBoxSRV);
 
 	D3D11_SAMPLER_DESC sd = {};
 	sd.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -295,6 +406,11 @@ void Game::LoadShaders()
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 
+	//Water Material
+	waterMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	waterMat->GetVertexShader()->LoadShaderFile(L"WaterVertexShader.cso");
+	waterMat->GetPixelShader()->LoadShaderFile(L"WaterPixelShader.cso");
+
 	//skybox loading
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
@@ -307,6 +423,11 @@ void Game::LoadShaders()
 	alphaPostVertexShader->LoadShaderFile(L"BlurVertexShader.cso");
 	alphaPostPixelShader->LoadShaderFile(L"BlurPixelShader.cso");
 
+	//particle shader loading
+	particleVS = new SimpleVertexShader(device, context);
+	particleVS->LoadShaderFile(L"ParticleVS.cso");
+	particlePS = new SimplePixelShader(device, context);
+	particlePS->LoadShaderFile(L"ParticlePS.cso");
 
 	//mat1->GetPixelShader()->SetShaderResourceView("");
 	// UI button shader
@@ -363,6 +484,7 @@ void Game::CreateBasicGeometry()
 	m4 = new Mesh("../Assets/Models/cube.obj", device);
 	m5 = new Mesh("../Assets/Models/cylinder.obj", device);
 	m6 = new Mesh("../Assets/Models/torus.obj", device);
+	waterMesh = new Mesh("../Assets/Models/50x50.obj", device);
 
 
 	// Set up the refraction entity (the object that refracts)
@@ -391,7 +513,7 @@ void Game::CreateUIButtons()
 
 void Game::DrawScene()
 {
-	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
+	guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, causticLights);
 }
 
 void Game::DrawSky()
@@ -580,6 +702,10 @@ void Game::Update(float deltaTime, float totalTime)
 
 	refractionEntity->Rotate(XMFLOAT3(0, deltaTime * 0.25f, 0));
 	refractionEntity->CalculateWorldMatrix();
+
+	bubbleEmitter->Update(deltaTime);
+	bubbleEmitter2->Update(deltaTime);
+	if (guy->guyState == Happy) { heartEmitter->Update(deltaTime); }
 }
 
 // --------------------------------------------------------
@@ -606,6 +732,10 @@ void Game::Draw(float deltaTime, float totalTime)
 	
 	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
 
+	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, causticLights);
+	//guy->Draw(context, cam);
+
+
 	// Use our refraction render target and our regular depth buffer
 	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
 
@@ -618,6 +748,15 @@ void Game::Draw(float deltaTime, float totalTime)
 	//	(*it)->Draw(context, cam);
 	//
 	//}
+	//for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+	//	(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
+	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
+	//	(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+	//	(*it)->Draw(context, cam);
+	//
+	//}
+
 	if (debugMode) {
 		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
 			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
@@ -642,7 +781,23 @@ void Game::Draw(float deltaTime, float totalTime)
 	//feedButton->Draw(context, cam->GetProjectionMatrix(), cam->GetViewMatrix());
 
 	// Render the sky (after all opaque geometry)
+
+	//UINT stride = sizeof(Vertex);
+	//UINT offset = 0;
+
 	DrawSky();
+	
+	float blend[4] = { 1,1,1,1 };
+	context->OMSetBlendState(particleBlendState, blend, 0xffffffff);
+	context->OMSetDepthStencilState(particleDepthState, 0);
+
+	bubbleEmitter->Draw(context, cam);
+	bubbleEmitter2->Draw(context, cam);
+	if (guy->guyState == Happy) { heartEmitter->Draw(context, cam); }
+
+	// reset to default states
+	context->OMSetBlendState(0, blend, 0xffffffff);
+	context->OMSetDepthStencilState(0, 0);
 
 	// Back to the screen, but NO depth buffer for now!
 	// We just need to plaster the pixels from the render target onto the 
@@ -679,6 +834,8 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->OMSetBlendState(0, blendFactors, 0xFFFFFFFF);
 	context->RSSetState(0);
 	context->OMSetDepthStencilState(0, 0);
+
+	
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it

@@ -220,9 +220,11 @@ void GameEntity::PrepareMaterial(XMFLOAT4X4 pView, XMFLOAT4X4 pProjection, XMFLO
 	material->GetVertexShader()->SetMatrix4x4("world", worldMatrix);
 	material->GetVertexShader()->SetMatrix4x4("view", pView);
 	material->GetVertexShader()->SetMatrix4x4("projection", pProjection);
+	material->GetVertexShader()->SetFloat("time", globalTotalTime);
 	material->GetVertexShader()->CopyAllBufferData();
 
 	material->GetPixelShader()->SetFloat3("CameraPosition", pCamPosition);
+	material->GetPixelShader()->SetFloat("time", globalTotalTime);
 	material->GetPixelShader()->SetSamplerState("Sampler", material->GetSampler());
 	material->GetPixelShader()->SetShaderResourceView("DiffuseTexture", material->GetTexture());
 	material->GetPixelShader()->SetShaderResourceView("NormalTexture", material->GetNormal());

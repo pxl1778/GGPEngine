@@ -14,6 +14,7 @@ struct VertexToPixel
 	float4 position		: SV_POSITION;
 	float2 uv			: TEXCOORD0;
 	float3 worldPos		: TEXCOORD1;
+	float4 viewPos      : TEXCOORD2;
 	float3 normal		: NORMAL;
 	float3 tangent		: TANGENT;
 	float4 color		: COLOR;
@@ -38,11 +39,13 @@ cbuffer externalData : register(b0) {
 	//DirectionalLight dLight2;
 	//PointLight pLight1;
 	float3 CameraPosition;
+	float Time;
 };
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
 TextureCube SkyTexture	: register(t2);
+Texture2D ProjectionTexture	: register(t3);
 SamplerState Sampler : register(s0);
 
 // --------------------------------------------------------
@@ -95,6 +98,24 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float fakeFresnel = saturate(dot(input.normal, dirToCamera));
 	fakeFresnel = pow(fakeFresnel, 0.75f);
 	float3 final = lerp(reflectColor, surfaceColor * finalColor * input.color, fakeFresnel);
+
+	//calculate projected texture coordinates
+	float2 projectionTexCoord;
+	float2 projectionTexCoord2;
+	float speed = .1f;
+	projectionTexCoord.x = (input.viewPos.x / input.viewPos.w / 2.0f + .5f) + (Time*speed);
+	projectionTexCoord.y = (input.viewPos.y / input.viewPos.w / 2.0f + .5f) + (Time*speed);
+	projectionTexCoord2.x = (-input.viewPos.x / input.viewPos.w / 2.0f + .5f) + (Time*speed);
+	projectionTexCoord2.y = (-input.viewPos.y / input.viewPos.w / 2.0f + .5f) + (0 * speed);
+	//check if coordinates are within the projection (in 0 to 1 range)
+	//http://www.rastertek.com/dx11tut43.html tutorial i'm using 
+	
+	//sample the color value of the projection
+	//use additive so it gets brighter like light
+	float4 projectionColor = ProjectionTexture.Sample(Sampler, projectionTexCoord);
+	float4 projectionColor2 = ProjectionTexture.Sample(Sampler, projectionTexCoord2);
+	surfaceColor += (projectionColor / 2);
+	surfaceColor += (projectionColor2 / 2);
 	
 	return float4(final, 1);
 	//return surfaceColor * finalColor * input.color;

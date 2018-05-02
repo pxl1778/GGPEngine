@@ -12,3 +12,9 @@ struct PointLight {
 	DirectX::XMFLOAT3 Position;
 	float Attenuation;
 };
+
+struct Projection {
+	DirectX::XMFLOAT4X4 viewMatrix;
+	DirectX::XMFLOAT4X4 projectionMatrix;
+	ID3D11ShaderResourceView* projectionTexture;
+};
