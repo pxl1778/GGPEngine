@@ -20,7 +20,7 @@ Camera::Camera()
 		up);     // "Up" direction in 3D space (prevents roll)
 	XMStoreFloat4x4(&viewMatrix, XMMatrixTranspose(V)); // Transpose for HLSL!
 	XMStoreFloat4x4(&projectionMatrix, XMMatrixIdentity());
-	position = XMFLOAT3(0, 0, -20);
+	position = XMFLOAT3(0, 0, -14);
 	direction = XMFLOAT3(0, 0, 1);
 	rotationX = 0;
 	rotationY = 0;
@@ -65,24 +65,31 @@ void Camera::UpdateLookAt(float deltaTime, XMFLOAT3 pTargetLookAt) {
 	XMVECTOR rightVector = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(newForward));
 	XMVECTOR upVector = XMVector3Cross(newForward, rightVector);
 	XMStoreFloat4(&v, upVector);
-	if (GetAsyncKeyState('W') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * rotationSpeed * deltaTime));
-	}
-	if (GetAsyncKeyState('S') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * rotationSpeed * deltaTime));
-	}
 	if (GetAsyncKeyState('D') & 0x8000) {
 		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(rightVector) * rotationSpeed * deltaTime));
 	}
 	if (GetAsyncKeyState('A') & 0x8000) {
 		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(rightVector) * rotationSpeed * deltaTime));
 	}
-	if (GetAsyncKeyState('Q') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
+	if (GetAsyncKeyState('W') & 0x8000) {
+		XMFLOAT3 rotationOffset;
+		XMStoreFloat3(&rotationOffset, XMVector3Normalize(upVector) * rotationSpeed * deltaTime);
+		if (position.y + rotationOffset.y <= 13) {
+			XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
+		}
+		else {
+			position.y = 13;
+		}
 	}
-
-	if (GetAsyncKeyState('E') & 0x8000) {
-		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
+	if (GetAsyncKeyState('S') & 0x8000) {
+		XMFLOAT3 rotationOffset;
+		XMStoreFloat3(&rotationOffset, -XMVector3Normalize(upVector) * rotationSpeed * deltaTime);
+		if (position.y + rotationOffset.y >= -11) {
+			XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(upVector) * rotationSpeed * deltaTime));
+		}
+		else {
+			position.y = -11;
+		}
 	}
 	//XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
 	XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&pTargetLookAt), XMVector3Normalize(upVector));
@@ -103,7 +110,7 @@ void Camera::UpdateProjectionMatrix(unsigned pWidth, unsigned pHeight) {
 		0.25f * 3.1415926535f,		// Field of View Angle
 		(float)pWidth / pHeight,		// Aspect ratio
 		0.1f,						// Near clip plane distance
-		100.0f);					// Far clip plane distance
+		5500.0f);					// Far clip plane distance
 	XMStoreFloat4x4(&projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
 }
 

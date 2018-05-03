@@ -137,6 +137,9 @@ Game::~Game()
 	particleDepthState->Release();
 	particleBlendState->Release();
 
+	waterBlendState->Release();
+	waterNormalMap->Release();
+
 }
 
 // --------------------------------------------------------
@@ -261,21 +264,6 @@ void Game::Init()
 	// Ask DirectX for the actual object
 	device->CreateSamplerState(&rSamp, &refractSampler);
 
-	//set up projection of caustic lights-----------------------------------
-	causticLights = new Projection({ XMFLOAT4X4(), XMFLOAT4X4(),nullptr });
-	XMMATRIX P = XMMatrixPerspectiveFovLH(
-		.75f * 3.1415926535f,		// Field of View Angle
-		256/256,					// Aspect ratio
-		0.1f,						// Near clip plane distance
-		100.0f);					// Far clip plane distance
-	XMStoreFloat4x4(&causticLights->projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
-	XMFLOAT3 position = XMFLOAT3(0, 1, 0);
-	XMVECTOR forward = XMVectorSet(.01f, -1.0f, 0.0f, 0.0f);
-	XMVECTOR right = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(forward));
-	XMVECTOR up = XMVector3Cross(forward, right);
-	XMMATRIX newView = XMMatrixLookToLH(XMLoadFloat3(&position), XMVector3Normalize(forward), XMVector3Normalize(up));
-	XMStoreFloat4x4(&causticLights->viewMatrix, XMMatrixTranspose(newView));
-	CreateWICTextureFromFile(device, context, L"../Assets/Textures/caustic.png", 0, &causticLights->projectionTexture);
 
 	//particle setup--------------------------------------------------------
 	//load texture
@@ -302,6 +290,19 @@ void Game::Init()
 	blend.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
 	blend.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
 	device->CreateBlendState(&blend, &particleBlendState);
+
+	D3D11_BLEND_DESC waterBlendDesc = {};
+	waterBlendDesc.AlphaToCoverageEnable = false;
+	waterBlendDesc.IndependentBlendEnable = false;
+	waterBlendDesc.RenderTarget[0].BlendEnable = true;
+	waterBlendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+	waterBlendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	waterBlendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_ONE;
+	waterBlendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	waterBlendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+	waterBlendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+	waterBlendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	device->CreateBlendState(&waterBlendDesc, &waterBlendState);
 
 	// Set up particles
 	bubbleEmitter = new Emitter(
@@ -367,10 +368,10 @@ void Game::Init()
 		debugCubes.push_back(new GameEntity(m4, debugMat, "debugcube"));
 	}
 
-	gameEntities.push_back(new GameEntity(waterMesh, waterMat, "water"));
+	/*gameEntities.push_back(new GameEntity(waterMesh, waterMat, "water"));
 	gameEntities.back()->SetRotation(XMFLOAT3(XM_PI, 0, 0));
-	gameEntities.back()->Translate(XMFLOAT3(0, 20.0f, 0));
-	gameEntities.back()->Scale(XMFLOAT3(1.7f, 1.7f, 1.7f));
+	gameEntities.back()->Translate(XMFLOAT3(0, 1200.0f, 0));
+	gameEntities.back()->Scale(XMFLOAT3(500.0f, 1.0f, 500.0f));*/
 
 }
 
@@ -407,11 +408,28 @@ void Game::LoadShaders()
 	mat1->GetVertexShader()->LoadShaderFile(L"VertexShader.cso");
 	mat1->GetPixelShader()->LoadShaderFile(L"PixelShader.cso");
 
+
+	//set up projection of caustic lights-----------------------------------
+	causticLights = new Projection({ XMFLOAT4X4(), XMFLOAT4X4(),nullptr });
+	XMMATRIX P = XMMatrixPerspectiveFovLH(
+		.75f * 3.1415926535f,		// Field of View Angle
+		256 / 256,					// Aspect ratio
+		0.1f,						// Near clip plane distance
+		100.0f);					// Far clip plane distance
+	XMStoreFloat4x4(&causticLights->projectionMatrix, XMMatrixTranspose(P)); // Transpose for HLSL!
+	XMFLOAT3 position = XMFLOAT3(0, 1, 0);
+	XMVECTOR forward = XMVectorSet(.01f, -1.0f, 0.0f, 0.0f);
+	XMVECTOR right = XMVector3Cross(XMVECTOR({ 0, 1, 0 }), XMVector3Normalize(forward));
+	XMVECTOR up = XMVector3Cross(forward, right);
+	XMMATRIX newView = XMMatrixLookToLH(XMLoadFloat3(&position), XMVector3Normalize(forward), XMVector3Normalize(up));
+	XMStoreFloat4x4(&causticLights->viewMatrix, XMMatrixTranspose(newView));
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/caustic.png", 0, &causticLights->projectionTexture);
+
 	//Water Material
-	waterMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, wallNormal, sampler);
+	CreateWICTextureFromFile(device, context, L"../Assets/Textures/waternormal.jpg", 0, &waterNormalMap);
+	waterMat = new Material(new SimpleVertexShader(device, context), new SimplePixelShader(device, context), wallTexture, waterNormalMap, sampler);
 	waterMat->GetVertexShader()->LoadShaderFile(L"WaterVertexShader.cso");
 	waterMat->GetPixelShader()->LoadShaderFile(L"WaterPixelShader.cso");
-
 	//skybox loading
 	SkyBoxVertexShader = new SimpleVertexShader(device, context);
 	SkyBoxPixelShader = new SimplePixelShader(device, context);
@@ -490,7 +508,7 @@ void Game::CreateBasicGeometry()
 
 	// Set up the refraction entity (the object that refracts)
 	refractionEntity = new GameEntity(m1, refractionMat, "refractionBall"); 
-	refractionEntity->SetPosition(XMFLOAT3(0, 0, 0));
+	refractionEntity->SetPosition(XMFLOAT3(0, 1, 0));
 	refractionEntity->SetScale(XMFLOAT3(20, 20, 20)); 
 }
 
@@ -729,47 +747,21 @@ void Game::Draw(float deltaTime, float totalTime)
 		1.0f,
 		0);
 
-	//context->OMSetRenderTargets(1, &alphaPostRTV, depthStencilView);
-	
-	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV);
-
-	//guy->Draw(context, cam, &dLight1, &dLight2, &pLight1, skyBoxSRV, causticLights);
-	//guy->Draw(context, cam);
-
-
 	// Use our refraction render target and our regular depth buffer
 	context->OMSetRenderTargets(1, &refractionRTV, depthStencilView);
 
 	XMFLOAT4 white = XMFLOAT4(1.00, 1.0, 1.0, 1.0);
-	//for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
-	//	(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
-	//	(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
-	//	(*it)->Draw(context, cam);
-	//
-	//}
-	//for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
-	//	(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-	//	//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
-	//	(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
-	//	(*it)->Draw(context, cam);
-	//
-	//}
+
+
 
 	if (debugMode) {
 		for (std::vector<GameEntity*>::iterator it = debugCubes.begin(); it != debugCubes.end(); ++it) {
 			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 			(*it)->Draw(context, cam);
 		}
 		for (std::vector<GameEntity*>::iterator it = rayEntities.begin(); it != rayEntities.end(); ++it) {
 			(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
-			//(*it)->GetMaterial()->GetPixelShader()->SetData("dLight2", &dLight2, sizeof(DirectionalLight));
-			//(*it)->GetMaterial()->GetPixelShader()->SetData("pLight1", &pLight1, sizeof(PointLight));
 			(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
 			(*it)->Draw(context, cam);
 		}
@@ -778,15 +770,16 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Draw the scene (WITHOUT the refracting object)
 	DrawScene();
 
-	// Draw Feed Button
-	//feedButton->Draw(context, cam->GetProjectionMatrix(), cam->GetViewMatrix());
-
-	// Render the sky (after all opaque geometry)
-
-	//UINT stride = sizeof(Vertex);
-	//UINT offset = 0;
-
 	DrawSky();
+
+
+	context->OMSetBlendState(waterBlendState, 0, 0xffffffff);
+	for (std::vector<GameEntity*>::iterator it = gameEntities.begin(); it != gameEntities.end(); ++it) {
+		(*it)->GetMaterial()->GetPixelShader()->SetData("dLight1", &dLight1, sizeof(DirectionalLight));
+		(*it)->GetMaterial()->GetVertexShader()->SetData("color", &white, sizeof(XMFLOAT4));
+		(*it)->Draw(context, cam);
+	}
+	context->OMSetBlendState(0, 0, 0xffffffff);
 	
 	float blend[4] = { 1,1,1,1 };
 	context->OMSetBlendState(particleBlendState, blend, 0xffffffff);
@@ -807,10 +800,6 @@ void Game::Draw(float deltaTime, float totalTime)
 
 	// Do blur effect
 	DrawBlurEffect(); // can't use DrawFullscreenQuad() fxn with blur effect D:
-
-	// Draw a fullscreen quad with our render target texture (so the user can see
-	// what we've drawn so far).  
-	//DrawFullscreenQuad(refractionSRV);
 
 	// Turn the depth buffer back on, so we can still
 	// used the depths from our earlier scene render
@@ -835,8 +824,6 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->OMSetBlendState(0, blendFactors, 0xFFFFFFFF);
 	context->RSSetState(0);
 	context->OMSetDepthStencilState(0, 0);
-
-	
 
 	// Present the back buffer to the user
 	//  - Puts the final frame we're drawing into the window so the user can see it

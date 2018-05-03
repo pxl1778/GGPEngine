@@ -146,5 +146,8 @@ private:
 	SimplePixelShader* particlePS;
 	ID3D11DepthStencilState* particleDepthState;
 	ID3D11BlendState* particleBlendState;
+
+	ID3D11BlendState* waterBlendState;
+	ID3D11ShaderResourceView* waterNormalMap;
 };
 

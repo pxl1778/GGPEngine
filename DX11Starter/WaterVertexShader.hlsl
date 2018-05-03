@@ -44,8 +44,8 @@ VertexToPixel main( VertexShaderInput input )
 	//
 	// The result is essentially the position (XY) of the vertex on our 2D 
 	// screen and the distance (Z) from the camera (the "depth" of the pixel)
-	output.position = mul(float4(input.position, 1.0f), worldViewProj) + float4(0, sin(input.position.z + input.position.x + (time*5)), 0, 0);
-	output.worldPos = mul(float4(input.position, 1.0f), world).xyz + float3(0, sin(input.position.x), 0);
+	output.position = mul(float4(input.position, 1.0f), worldViewProj);// +float4(0, sin(input.position.z + input.position.x + (time * 5)), 0, 0);
+	output.worldPos = mul(float4(input.position, 1.0f), world).xyz;// +float3(0, sin(input.position.x), 0);
 	output.normal = mul(input.normal, (float3x3)world);
 	output.uv = input.uv;
 	output.tangent = mul(input.tangent, (float3x3)world);

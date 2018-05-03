@@ -35,11 +35,11 @@ float4 main(VertexToPixel input) : SV_TARGET
 	input.tangent = normalize(normalize(input.tangent) - dot(input.tangent, input.normal)*input.normal);
 	float3 biTangent = cross(input.tangent, input.normal);
 	float3x3 TBN = float3x3(input.tangent, biTangent, input.normal);
-	float2 newUV = input.uv + float2(-time, time)/35;
-	float3 unpackedNormal = NormalTexture.Sample(Sampler, newUV).rgb * 2.0f - 1.0f;;
+	float2 newUV = (input.uv + float2(-time, time)/500) * 40;
+	float3 unpackedNormal = NormalTexture.Sample(Sampler, newUV*5).rgb * 2.0f - 1.0f;;
 	float3 finalNormal = mul(unpackedNormal, TBN);
 	float normalOffset = dot(finalNormal, input.normal);
-	//input.normal = normalize(finalNormal);
+	input.normal = normalize(finalNormal);
 
 	//lights
 	float dNdotL1 = saturate(dot(-input.normal, -dLight1.Direction));
@@ -49,10 +49,13 @@ float4 main(VertexToPixel input) : SV_TARGET
 	float3 dirToDirLight = normalize(-newLightPosition - input.worldPos);
 
 	float specularityL1 = pow(saturate(dot(reflect(-dirToDirLight, input.normal), dirToCamera)), 32) * step(0.9f, normalOffset);
-	float4 finalColor = dLight1.AmbientColor + ((dLight1.DiffuseColor * dNdotL1)) + specularityL1;
+	float4 finalColor = dLight1.AmbientColor*5 + ((dLight1.DiffuseColor * dNdotL1)) + specularityL1;
+
+	finalColor.a = saturate(dot(dirToCamera, -input.normal)) + 0.1;
+	finalColor.a += specularityL1;
 
 	//diffuse
-	float4 surfaceColor = DiffuseTexture.Sample(Sampler, input.uv);
+	float4 surfaceColor = DiffuseTexture.Sample(Sampler, newUV);
 
 	return finalColor;
 
