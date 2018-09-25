@@ -722,6 +722,7 @@ void Game::Update(float deltaTime, float totalTime)
 	refractionEntity->Rotate(XMFLOAT3(0, deltaTime * 0.05f, 0));
 	refractionEntity->CalculateWorldMatrix();
 
+
 	bubbleEmitter->Update(deltaTime);
 	bubbleEmitter2->Update(deltaTime);
 	if (guy->guyState == Happy) { heartEmitter->Update(deltaTime); }
@@ -815,9 +816,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	context->PSSetShaderResources(0, 16, nullSRV);
 
 	// Draw Feed Button
-	spriteBatch->Begin();
-	spriteBatch->Draw(buttonSRV, feedButton2);
-	spriteBatch->End();
+	//spriteBatch->Begin();
+	//spriteBatch->Draw(buttonSRV, feedButton2);
+	//spriteBatch->End();
 
 	// Don't forget to reset states!
 	float blendFactors[4] = { 1,1,1,1 };

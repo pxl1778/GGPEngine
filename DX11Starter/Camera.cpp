@@ -11,7 +11,7 @@ Camera::Camera()
 	//    camera and the direction vector along which to look (as well as "up")
 	// - Another option is the LOOK AT function, to look towards a specific
 	//    point in 3D space
-	XMVECTOR pos = XMVectorSet(0, 0, -20, 0);
+	XMVECTOR pos = XMVectorSet(0, 0, -16, 0);
 	XMVECTOR dir = XMVectorSet(0, 0, 1, 0);
 	XMVECTOR up = XMVectorSet(0, 1, 0, 0);
 	XMMATRIX V = XMMatrixLookToLH(
@@ -24,7 +24,7 @@ Camera::Camera()
 	direction = XMFLOAT3(0, 0, 1);
 	rotationX = 0;
 	rotationY = 0;
-	rotationSpeed = 20;
+	rotationSpeed = 5;
 }
 
 
@@ -90,6 +90,12 @@ void Camera::UpdateLookAt(float deltaTime, XMFLOAT3 pTargetLookAt) {
 		else {
 			position.y = -11;
 		}
+	}
+	if (GetAsyncKeyState('Q') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), XMVector3Normalize(newForward) * 3 * deltaTime));
+	}
+	if (GetAsyncKeyState('E') & 0x8000) {
+		XMStoreFloat3(&position, XMVectorAdd(XMLoadFloat3(&position), -XMVector3Normalize(newForward) * 3 * deltaTime));
 	}
 	//XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMVector3Normalize(newForward), XMVector3Normalize(upVector));
 	XMMATRIX newView = XMMatrixLookAtLH(XMLoadFloat3(&position), XMLoadFloat3(&pTargetLookAt), XMVector3Normalize(upVector));

@@ -67,6 +67,7 @@ void UIButton::LoadShaders(ID3D11Device * device, ID3D11DeviceContext * context,
 
 void UIButton::Draw(ID3D11DeviceContext * context, DirectX::XMFLOAT4X4 projectionMat, DirectX::XMFLOAT4X4 viewMat)
 {
+	/*
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	UINT UIstride = sizeof(UIVertex);
 	UINT offset = 0;
@@ -87,6 +88,7 @@ void UIButton::Draw(ID3D11DeviceContext * context, DirectX::XMFLOAT4X4 projectio
 		0);    // Offset to add to each index when looking up vertices
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	*/
 }
 
 ID3D11Buffer * UIButton::GetVertexBuffer()
